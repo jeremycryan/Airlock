@@ -6,7 +6,7 @@ class Game(object):
 
     def __init__(self):
         self.create_oxygen()
-        self.deck = Deck()
+        self.create(self, True)
 
 
     def create_deck(self, expansion = True):
