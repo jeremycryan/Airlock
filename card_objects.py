@@ -62,3 +62,11 @@ class Deck(object):
         """ Shuffles the deck. """
 
         random.shuffle(self.cards)
+
+    def draw(self, num=1):
+        """ Takes the top card(s) from the deck, as an array """
+        if num > len(self.cards):
+            num = len(self.cards)
+        cards = self.cards[-num:]
+        self.cards = self.cards[:-num]
+        return cards
