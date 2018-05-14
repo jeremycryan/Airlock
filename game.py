@@ -38,8 +38,8 @@ class Game(object):
             prompt_string == 'Choose between: '
 
         print(prompt_string + str(choices))
-        choice = raw_input()
+        choice = input()
 
         while choice not in choices:
             print("That's not a valid choice. Choose again.")
-            choice = raw_input()
+            choice = input()
