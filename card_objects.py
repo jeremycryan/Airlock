@@ -16,10 +16,12 @@ class Card(object):
 class Deck(object):
     """   A deck of airlock cards """
 
-    def __init__(self, game, expansion = True):
+    def __init__(self, game, expansion = True, is_main_deck = False):
         self.game = game
         self.cards = []
-        self.populate(expansion)
+
+        if is_main_deck:
+            self.populate(expansion)
 
     def populate(self, expansion = True):
         """ Adds the default deck. """
