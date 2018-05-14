@@ -6,19 +6,22 @@ class Game(object):
 
     def __init__(self):
         self.create_oxygen()
-        self.create_deck()
+        self.deck = Deck()
 
 
     def create_deck(self, expansion = True):
         """ Creates the deck. """
 
-        self.deck = Deck(self, expansion)
+        self.deck = Deck(self, expansion, True)
+        self.discard = Deck(self)
+        self.command_pile = Deck(self)
 
 
     def create_oxygen(self):
         """ Creates the oxygen cells. """
 
-        self.oxygen = ['red', 'red', 'blue', 'blue', 'blue', 'blue']
+        self.oxygen = 6
+        self.cell_types = ['r','r','b','b','b','b']
         self.force_red = False
 
 
@@ -38,8 +41,8 @@ class Game(object):
             prompt_string == 'Choose between: '
 
         print(prompt_string + str(choices))
-        choice = input()
+        choice = raw_input()
 
         while choice not in choices:
             print("That's not a valid choice. Choose again.")
-            choice = input()
+            choice = raw_input()
