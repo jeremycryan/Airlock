@@ -49,7 +49,6 @@ class Deck(object):
             self.add_card('contaminate', 2)
             self.add_card('execute', 1)
             self.add_card('shift', 3)
-            self.add_card('')
 
     def add_card(self, name, num=1):
         """ Adds 'num' cards of name 'name' to the deck. """
