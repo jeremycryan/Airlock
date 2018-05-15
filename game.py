@@ -1,16 +1,30 @@
 #!/usr/bin/env python
 from card_objects import Card, Deck
+from player import Player
 
 class Game(object):
     """ Airlock game object """
 
     def __init__(self):
         self.create_oxygen()
-        self.deck = Deck()
+        self.create_decks(True)
+        self.players = []
 
 
-    def create_deck(self, expansion = True):
-        """ Creates the deck. """
+    def main(self):
+        """ Plays the game """
+
+        print(self.deck)
+
+
+    def add_player(self, name):
+        """ Adds a player of name 'name' to the game. """
+
+        self.players.append(Player(self, name))
+
+
+    def create_decks(self, expansion = True):
+        """ Creates the deck objects. """
 
         self.deck = Deck(self, expansion, True)
         self.discard = Deck(self)
@@ -31,18 +45,9 @@ class Game(object):
         return self.oxygen[-1] == 'red' or self.force_red
 
 
-    def prompt(self, choices, prompt_string = None):
-        """ Somehow prompts the player to make a choice between items in a list.
-        This could be through text or in a GUI. """
-
-        #   TODO make this use a gui and generally be better
-
-        if prompt_string == None:
-            prompt_string == 'Choose between: '
-
-        print(prompt_string + str(choices))
-        choice = raw_input()
-
-        while choice not in choices:
-            print("That's not a valid choice. Choose again.")
-            choice = raw_input()
+if __name__ == '__main__':
+    game = Game()
+    game.add_player('Paul')
+    game.add_player('Daniel')
+    game.add_player('Jeremy')
+    game.main()

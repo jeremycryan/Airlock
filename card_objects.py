@@ -12,6 +12,9 @@ class Card(object):
         self.game = game
         self.name = name
 
+    def __repr__(self):
+        return "Card: %s" % self.name
+
 
 class Deck(object):
     """   A deck of airlock cards """
@@ -22,6 +25,9 @@ class Deck(object):
 
         if is_main_deck:
             self.populate(expansion)
+
+    def __repr__(self):
+        return "Deck object containing %s cards." % len(self.cards)
 
     def populate(self, expansion = True):
         """ Adds the default deck. """
@@ -56,7 +62,13 @@ class Deck(object):
         """ Adds 'num' cards of name 'name' to the deck. """
 
         for i in range(0, num):
-            self.cards.append(Card(name))
+            self.cards.append(Card(self.game, name))
+
+    def add(self, cards):
+        """ Adds a list of cards to the hand. """
+
+        for card in cards:
+            self.cards.append(card)
 
     def shuffle(self):
         """ Shuffles the deck. """
@@ -65,6 +77,7 @@ class Deck(object):
 
     def draw(self, num=1):
         """ Takes the top card(s) from the deck, as an array """
+
         if num > len(self.cards):
             num = len(self.cards)
         cards = self.cards[-num:]
