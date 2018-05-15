@@ -199,7 +199,8 @@ class Game(object):
                 for card in player.permanents.to_list():
                     if card.name == name:
                         return card
-        for card in self.permanents.to_list():
+        
+        for card in self.global_permanents.to_list():
             if card.name == name:
                 return card
         return None
