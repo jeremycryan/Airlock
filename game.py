@@ -45,6 +45,7 @@ class Game(object):
         self.command_pile = Deck(self)
         self.to_discard = Deck(self) # Cards to be discarded
         self.stage = Deck(self) # Cards to be played
+        self.global_permanents = Deck(self) # Includes cards like contaminate
 
 
     def create_oxygen(self):
@@ -53,20 +54,27 @@ class Game(object):
         self.oxygen = 6
         self.cell_types = ['r','r','b','b','b','b']
         self.force_red = False
+        self.safe_next_turn = False
         self.oxygen_protected = False
-        self.safe = False
 
     def damage_oxygen(self):
         """ Damages an oxygen cell. """
 
-        if self.safe:
-            # TODO: Red alert
-            return
+        #   FIXME addressing in card classes instead
+        # if self.safe:
+        #     # TODO: Red alert
+        #     return
         self.oxygen -= 1
-        print("Oxygen cell destroyed: " + str(self.oxygen) + " cells remaining")
+        print("Oxygen cell destroyed: %s cells remaining." % self.oxygen)
         if self.oxygen <= 0:
             self.end_game(False)
             # TODO: Check for martyr
+
+    def repair_oxygen(self):
+        """ Adds one to the oxygen supply. """
+
+        self.oxygen += 1
+        print("Oxygen cell restored: %s cells remaining." % self.oxygen)
 
     def is_red_alert(self):
         """ Returns True if the current oxygen cell is a red alert cell """
@@ -78,13 +86,16 @@ class Game(object):
         player = self.active_player
         print("Start of " + player.name + "'s turn")
         # Start of turn effects
-        if self.oxygen_protected:
-            self.oxygen_protected = False
-            self.safe = True
+        if self.safe_next_turn:
+            self.safe_next_turn = False
+            self.oxygen_protected = True
         player.draw_up()
         for card in player.permanents.to_list():
             if hasattr(card, "on_turn_start"):
                 card.on_turn_start()
+
+        #   TODO abilities and patching here
+
         # Play cards into command pile
         self.request_card(player)
         allies = self.live_players[:]
@@ -111,6 +122,9 @@ class Game(object):
                           prompt_string = "Choose first card to activate: ")
             print("Playing " + card.name)
             card.play()
+
+        #    TODO ablities and patching again
+
         # Discard
         if self.find_permanent_card("Engine Failure"):
             self.deck.add(self.to_discard.remove_all())
@@ -119,10 +133,18 @@ class Game(object):
             card = player.prompt(self.to_discard.to_list(), True,
                                  prompt_string = "Choose first card to discard: ")
             self.discard.add(self.to_discard.remove(card))
-        self.safe = False
+        self.oxygen_protected = False
+
         # Check for game over
         if not self.deck.size():
             self.end_game(True)
+
+        #   Go to the next player
+        self.next_player()
+
+    def next_player(self):
+        """ Make it the next player's turn. """
+
         # Change players
         i = self.players.index(player)
         for j in range(1,len(self.players)):
@@ -130,12 +152,12 @@ class Game(object):
             if successor in self.live_players and not successor.skipped:
                 self.active_player = successor
                 break
-            
+
     def request_card(self, player):
         """ Prompts target player to play a card into the command pile """
-        
+
         if player.hand.size() > 0:
-            card = player.prompt(player.hand.to_list(), 
+            card = player.prompt(player.hand.to_list(),
                                 prompt_string = "Play a card facedown: ")
             self.command_pile.add(player.hand.remove(card))
         else:
@@ -143,24 +165,55 @@ class Game(object):
 
     def kill(self, player):
         """ Removes a player from the game, ends game if needed """
-        
+
         self.live_players.remove(player)
         self.to_discard.add(player.hand.remove_all())
         print(player.name + " is dead!")
         # check for game over
 
-    def find_permanent_card(self, name):
+    def find_permanent_card(self, name, excluded_player = None):
         """ Determines if a permanent card is in play """
 
         for player in self.live_players:
-            for card in player.permanents.to_list():
-                if card.name == name:
-                    return card
+            if player != excluded_player:
+                for card in player.permanents.to_list():
+                    if card.name == name:
+                        return card
         return None
+
+
+    def find_controller(self, perm_card):
+        """ Returns the player class for whoever owns the permanent. """
+
+        for player in self.live_players:
+            for card in player.permanents.to_list():
+                if card is perm_card:
+                    return player
+        return None
+
+
+    def find_all_malfunctions(self):
+        """ Returns a list of all malfunction cards currently in play. """
+
+        malfunctions = []
+
+        #   Looks through all malfunctions in player permanents
+        for player in self.live_players:
+            for card in player.permanents.to_list():
+                if card.is_malfunction:
+                    malfunctions.append(card)
+
+        #   Looks through all malfunctions in global region
+        for card in self.global_permanents:
+            if card.is_malfunction:
+                malfunctions.append(card)
+
+        return malfunctions
+
 
     def end_game(self, crew_won):
         """ Handle end of game cleanup """
-        
+
         if crew_won:
             print("The crew was victorious!")
         else:

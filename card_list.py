@@ -8,6 +8,7 @@ class CardName(Card):
     def __init__(self, game):
         name = 'cardname'
         self.color = 'green'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
@@ -28,6 +29,7 @@ class Rupture(Card):
     def __init__(self, game):
         name = 'Rupture'
         self.color = 'red'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
@@ -53,6 +55,7 @@ class Recycle(Card):
     def __init__(self, game):
         name = 'Recycle'
         self.color = 'blue'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
@@ -80,11 +83,12 @@ class Impact(Card):
     def __init__(self, game):
         name = 'Impact'
         self.color = 'red'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
-        
+
         #   Choose to damage character or oxygen supply
         self.hidden = False
         if self.game.active_player in self.game.live_players:
@@ -114,6 +118,7 @@ class Aftershock(Card):
     def __init__(self, game):
         name = 'Aftershock'
         self.color = 'red'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
@@ -150,10 +155,12 @@ class Aftershock(Card):
 
 
 class HullBreach(Card):
+    #   TODO Make possible to patch
 
     def __init__(self, game):
         name = 'Hull Breach'
         self.color = 'red'
+        self.is_malfunction = True
         Card.__init__(self, game, name)
 
     def play(self):
@@ -177,12 +184,20 @@ class HullBreach(Card):
         if not self.game.oxygen_protected:
             self.game.damage_oxygen()
 
+    def destroy(self):
+        """ Discards the malfunction from play. """
+
+        owner = self.game.find_controller(self)
+        owner.permanents.remove(self)
+        self.game.to_discard.add(self)
+
 
 class Energy(Card):
 
     def __init__(self, game):
         name = 'Energy'
         self.color = 'blue'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
@@ -197,18 +212,26 @@ class Energy(Card):
         self.game.stage.remove(self)
         self.game.active_player.permanents.add(self)
 
+    def destroy(self):
+        """ Discards the card from play. """
+
+        owner = self.game.find_controller(self)
+        owner.permanents.remove(self)
+        self.game.to_discard.add(self)
+
 
 class Safeguard(Card):
 
     def __init__(self, game):
         name = 'Safeguard'
         self.color = 'blue'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
         self.hidden = False
-        self.game.oxygen_protected = True
+        self.safe_next_turn = True
         self.resolve()
 
     def resolve(self):
@@ -224,6 +247,7 @@ class Salvage(Card):
     def __init__(self, game):
         name = 'Salvage'
         self.color = 'blue'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
@@ -262,6 +286,7 @@ class Override(Card):
     def __init__(self, game):
         name = 'Override'
         self.color = 'red'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
@@ -288,11 +313,12 @@ class Wormhole(Card):
     def __init__(self, game):
         name = 'Wormhole'
         self.color = 'red'
+        self.is_malfunction = False
         Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
-        
+
         self.hidden = False
         wormed = Deck(self.game)
 
@@ -335,3 +361,94 @@ class Wormhole(Card):
         #   Remove card from stage and add to discard
         self.game.stage.remove(self)
         self.game.to_discard.add(self)
+
+
+class Discharge(Card):
+
+    def __init__(self, game):
+        name = 'Discharge'
+        self.color = 'red'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+
+        #   Remove all energy from play that doesn't belong to active player
+        while self.game.find_permanent_card('Energy',
+            excluded_player = self.game.active_player):
+
+            #   TODO Find a more efficient way to find and kill energy that
+            #   doesn't involve looping through all permenents three times
+            #   per iteration
+            found_energy = self.game.find_permanent_card('Energy',
+                excluded_player = self.game.active_player)
+            found_energy.destroy()
+
+        self.resolve()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
+
+
+class Repair(Card):
+
+    def __init__(self, game):
+        name = 'Repair'
+        self.color = 'blue'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+
+        malfunctions = self.game.find_all_malfunctions
+        choice = self.active_player.prompt(malfunctions,
+            "Choose a malfunction to destroy. ")
+        choice.destroy()
+        self.resolve()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
+
+
+class Contaminate(Card):
+
+    def __init__(self, game):
+        name = 'Contaminate'
+        self.color = 'red'
+        self.is_malfunction = True
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+        self.resolve()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to global permanents, and reduce the
+        #   oxygen cell count by 1
+        self.game.stage.remove(self)
+        self.game.global_permanents.add(self)
+        self.game.damage_oxygen()
+
+    def destroy(self):
+        """ Discards the card from play """
+
+        self.game.global_permanents.remove(self)
+        self.game.to_discard.add(self)
+
+        #   Restore the oxygen that was contaminated
+        self.game.repair_oxygen()
