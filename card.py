@@ -26,7 +26,11 @@ class Mission(Card):
 
     def on_death(self):
         """ Actions to carry out when the player dies """
-        self.game.to_discard.add(player.hand.remove_all())
+        if self.game.get_player(self) is self.game.active_player:
+            for card in self.game.active_player.hand.to_list():
+                card.hidden = False
+        self.game.to_discard.add(self.game.get_player(self).hand.remove_all())
+        self.game.to_discard.add(self.game.get_player(self).permanents.remove_all())
         self.visible = True
         if not self.can_die:
             if self.is_red:
@@ -50,6 +54,9 @@ class Character(Card):
         """ Attempt to use a given ability """
         if ability in self.abilities:
             getattr(self, ability.replace(" ","_").lower())()
+            for energy in self.game.get_player(self).permanents.find(
+                "Energy", True, self.abilities[ability]):
+                energy.destroy()
 
     def refresh(self):
         self.game.active_player.discard()

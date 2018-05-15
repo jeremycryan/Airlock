@@ -177,12 +177,12 @@ class Game(object):
             abilities = []
         malfunctions = self.find_all_malfunctions()
         # TODO: Malfunctions repr should include player name
-        # TODO: Malfunctions need patch function
         abstain = ["Pass"]
         choice = player.prompt(abilities+malfunctions+abstain,
                                prompt_string = "How do you wish to use your energy? ")
         if choice in malfunctions:
-            pass#choice.patch()
+            player.permanents.find("Energy").destroy()
+            choice.patch()
         elif choice in abilities:
             player.character.use_ability(choice)
         return choice != abstain[0]
@@ -234,6 +234,8 @@ class Game(object):
 
         for player in self.players:
             if card in player.permanents.to_list() + player.hand.to_list():
+                return player
+            if card is player.mission or card is player.character:
                 return player
         return None
 

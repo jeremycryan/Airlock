@@ -159,13 +159,13 @@ class Aftershock(Card):
 
 
 class HullBreach(Card):
-    #   TODO Make possible to patch
 
     def __init__(self, game):
         name = 'Hull Breach'
         self.color = 'red'
         self.is_malfunction = True
         Card.__init__(self, game, name)
+        self.patched = 0
 
     def play(self):
         """ Method that occurs on play """
@@ -191,9 +191,15 @@ class HullBreach(Card):
     def destroy(self):
         """ Discards the malfunction from play. """
 
-        owner = self.game.find_controller(self)
+        owner = self.game.get_player(self)
         owner.permanents.remove(self)
         self.game.to_discard.add(self)
+
+    def patch(self):
+        """ Patch the malfunction """
+        self.patched += 1
+        if self.patched >= 2:
+            self.destroy()
 
 
 class Energy(Card):
@@ -219,7 +225,7 @@ class Energy(Card):
     def destroy(self):
         """ Discards the card from play. """
 
-        owner = self.game.find_controller(self)
+        owner = self.game.get_player(self)
         owner.permanents.remove(self)
         self.game.to_discard.add(self)
 
@@ -460,6 +466,10 @@ class Contaminate(Card):
         #   Restore the oxygen that was contaminated
         self.game.repair_oxygen()
 
+    def patch(self):
+        """ Patch the malfunction """
+        self.destroy()
+
 
 class Overrule(Card):
 
@@ -540,6 +550,9 @@ class EngineFailure(Card):
         self.game.get_player(self).permanents.remove(self)
         self.game.discard.add(self)
 
+    def patch(self):
+        """ Patch the malfunction """
+        self.destroy()
 
 class Inflict(Card):
 

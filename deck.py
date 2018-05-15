@@ -101,7 +101,8 @@ class Deck(object):
         if card in self.cards:
             self.cards.remove(card)
         else:
-            print("Card could not be discarded: " + str(card))
+            if card:
+                print("Card could not be discarded: " + str(card))
             return []
         return [card]
 
@@ -126,3 +127,14 @@ class Deck(object):
         """ Counts the occurences of specified card in the deck """
 
         return sum(card.name == name for card in self.cards)
+
+    def find(self, name, num = 1, replace = False):
+        """ Returns cards by name, num = -1 returns all instances """
+        found = []
+        for card in self.cards:
+            if card.name == name:
+                if num > len(found) or num < 0:
+                    if not replace:
+                        self.cards.remove(card)
+                    found += [card]
+        return found
