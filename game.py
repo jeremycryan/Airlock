@@ -31,6 +31,8 @@ class Game(object):
         self.deck = Deck(self, expansion, True)
         self.discard = Deck(self)
         self.command_pile = Deck(self)
+        self.to_discard = Deck(self) # Cards to be discarded
+        self.stage = Deck(self) # Cards to be played
 
 
     def create_oxygen(self):
@@ -47,11 +49,41 @@ class Game(object):
         #   TODO consider end game situation
         self.oxygen -= 1
 
-
     def is_red_alert(self):
         """ Returns True if the current oxygen cell is a red alert cell """
 
         return self.oxygen[-1] == 'red' or self.force_red
+
+    def take_turn(self):
+        """ Carries out a single turn """
+        player = self.active_player
+        player.draw_up()
+        for card in player.permanents:
+            if card.hasattr("on_turn_start"):
+                card.on_turn_start()
+        self.request_card(player)
+        allies = self.players[:]
+        allies.remove(player)
+        if player.next_ally:
+            if len(player.next_ally.hand) and player.next_ally.health:
+                allies = [player.next_ally]
+        for ally in allies:
+            if not len(ally.hand):
+                allies.remove(ally)
+        ally = player.prompt(allies, prompt_string = "Select an ally: ")
+        self.request_card(ally)
+        self.command_pile.add(self.deck.draw())
+        self.command_pile.shuffle()
+        self.stage = draw(self.command_pile, num = 3 if is_red_alert() else 2)
+        for card in range():
+            
+            card.play()
+            
+    def request_card(self, player):
+        """ Prompts target player to play a card into the command pile """
+        if len(player.hand) > 0:
+            self.command_pile.add(player.prompt(player.hand, \
+                                prompt_string = "Play a card facedown: "))
 
 
 if __name__ == '__main__':

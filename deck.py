@@ -91,6 +91,13 @@ class Deck(object):
             del self.cards[index]
         return card
 
+    def remove(self, card):
+        """  """
+        if card in self.cards:
+            self.cards.remove(card)
+        else:
+            print("Card could not be discarded: " + str(card))
+
     def to_list(self):
         """ Returns the cards in the deck as a list """
 
