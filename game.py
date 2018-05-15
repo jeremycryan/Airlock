@@ -9,6 +9,7 @@ class Game(object):
         self.create_oxygen()
         self.create_decks(True)
         self.players = []
+        self.active_player = None
 
 
     def main(self):
@@ -37,6 +38,13 @@ class Game(object):
         self.oxygen = 6
         self.cell_types = ['r','r','b','b','b','b']
         self.force_red = False
+        self.oxygen_protected = False
+
+    def damage_oxygen(self):
+        """ Damages an oxygen cell. """
+
+        #   TODO consider end game situation
+        self.oxygen -= 1
 
 
     def is_red_alert(self):
