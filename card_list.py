@@ -37,7 +37,7 @@ class Rupture(Card):
 
         #   Damage the ship if it isn't protected, or if it's red alert.
         self.hidden = False
-        if (not self.game.oxygen_protected) or (self.game.is_red_alert()):
+        if (self.game.oxygen_protected == 0) or (self.game.is_red_alert()):
             self.game.damage_oxygen()
 
         self.resolve()
@@ -235,7 +235,7 @@ class Safeguard(Card):
     def play(self):
         """ Method that occurs on play """
         self.hidden = False
-        self.safe_next_turn = True
+        self.game.safe_next_turn = True
         self.resolve()
 
     def resolve(self):
@@ -505,6 +505,7 @@ class EngineFailure(Card):
         """ Method that occurs on play """
 
         self.hidden = False
+        self.resolve()
 
     def resolve(self):
         """ What happens after the card gets played """
@@ -538,3 +539,92 @@ class EngineFailure(Card):
         #   Remove card from play and send to discard pile
         self.game.global_permanents.remove(self)
         self.game.discard.add(self)
+
+
+class Inflict(Card):
+
+    def __init__(self, game):
+        name = 'Inflict'
+        self.color = 'red'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+
+        choice = self.game.active_player.prompt(["Take damage",
+            "Reveal mission"],
+            prompt_string = "What do you do with Inflict? ")
+
+        #   Make them choose again if they can't reveal mission
+        while choice == "Reveal mission" and \
+            not self.game.active_player.mission.is_red:
+
+            print("You can only reveal your mission if you are red.")
+            choice = self.game.active_player.prompt(["Take damage",
+                "Reveal mission"],
+                prompt_string = "What do you do with Inflict? ")
+
+        #   Execute the chosen action
+        if choice == "Take damage":
+            self.game.active_player.damage()
+        elif choice == "Reveal mission":
+            self.game.active_player.mission.visible = True
+
+        self.resolve()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
+
+
+class Airlock(Card):
+
+    def __init__(self, game):
+        name = 'Airlock'
+        self.color = 'green'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+
+        votes = []
+
+        #   Shuffle the player list to start with the active player
+        player_list = self.game.live_players[:]
+        pos = player_list.index(self.game.active_player)
+        player_list = player_list[pos:] + player_list[:pos]
+
+        #   Everybody cast your votes!
+        for player in player_list:
+            choice = player.prompt(self.game.live_players + ["Abstain"],
+                prompt_string = "Who do you vote to kill? ")
+
+            if choice == "Abstain":
+                print("%s has abstained from the vote." % player)
+            else:
+                print("%s has voted to airlock %s." % (player, choice))
+            votes.append(choice)
+#            player.character.on_vote(player)
+
+        #   Determine who was most voted and kill that player
+        for player in player_list:
+            if votes.count(player) > len(player_list)/2.0:
+                self.game.kill(player)
+                print("%s has been thrown from the airlock." % player)
+                break
+
+        self.resolve()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
