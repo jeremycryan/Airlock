@@ -571,6 +571,8 @@ class Inflict(Card):
             self.game.active_player.damage()
         elif choice == "Reveal mission":
             self.game.active_player.mission.visible = True
+            print("%s has revealed as %s!" % (self.game.active_player,
+                self.game.active_player.mission.name))
 
         self.resolve()
 
@@ -611,7 +613,7 @@ class Airlock(Card):
             else:
                 print("%s has voted to airlock %s." % (player, choice))
             votes.append(choice)
-#            player.character.on_vote(player)
+            player.character.on_vote(player)
 
         #   Determine who was most voted and kill that player
         for player in player_list:
@@ -619,6 +621,57 @@ class Airlock(Card):
                 self.game.kill(player)
                 print("%s has been thrown from the airlock." % player)
                 break
+
+        self.resolve()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
+
+
+class Execute(Card):
+
+    def __init__(self, game):
+        name = 'Execute'
+        self.color = 'green'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+
+        votes = []
+
+        #   Shuffle the player list to start with the active player
+        player_list = self.game.live_players[:]
+        pos = player_list.index(self.game.active_player)
+        player_list = player_list[pos:] + player_list[:pos]
+
+        #   Nominate a player
+        nominee = self.game.active_player.prompt(self.game.live_players,
+            prompt_string = "Choose a player to execute.")
+
+        #   Everybody cast your votes!
+        for player in player_list:
+            choice = player.prompt(["Yes", "No"],
+                prompt_string = "Vote to kill %s?" % nominee)
+
+            if choice == "Yes":
+                print("%s has voted to kill %s." % (player, nominee))
+            else:
+                print("%s has voted not to kill %s." % (player, nominee))
+
+            votes.append(choice)
+            player.character.on_vote(player)
+
+        #   Determine whether the nominee dies or not
+        if votes.count("Yes") > len(player_list)/2.0:
+            self.game.kill(nominee)
+            print("%s has been killed." % nominee)
 
         self.resolve()
 

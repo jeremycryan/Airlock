@@ -26,7 +26,7 @@ class Mission(Card):
 
     def on_death(self):
         """ Actions to carry out when the player dies """
-        self.to_discard.add(player.hand.remove_all())
+        self.game.to_discard.add(player.hand.remove_all())
         self.visible = True
         if not self.can_die:
             if self.is_red:
