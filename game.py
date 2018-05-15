@@ -100,7 +100,7 @@ class Game(object):
     def is_red_alert(self):
         """ Returns True if the current oxygen cell is a red alert cell """
 
-        return self.cell_types[self.oxygen-1] == 'red' or self.force_red
+        return self.cell_types[self.oxygen-1] == 'r' or self.force_red
 
     def take_turn(self):
         """ Carries out a single turn """
@@ -223,7 +223,7 @@ class Game(object):
                 for card in player.permanents.to_list():
                     if card.name == name:
                         return card
-        
+
         for card in self.global_permanents.to_list():
             if card.name == name:
                 return card
