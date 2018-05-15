@@ -2,14 +2,18 @@
 import random
 
 from deck import Deck
-from card import Card
+from card import Card, Mission, Character
 from player import Player
 import card_list
+import mission_list
+import character_list
 
 class Game(object):
     """ Airlock game object """
 
     def __init__(self):
+        self.missions = ["Saboteur","Crew","Crew","Crew","Chancellor","Accomplice"]
+        self.characters = ["Doctor","Doctor","Doctor","Doctor","Doctor","Doctor"]
         self.players = []
 
     def main(self):
@@ -19,7 +23,7 @@ class Game(object):
         while not self.reset:
             self.take_turn()
 
-    def setup(self):
+    def setup(self, chaos=False):
         """ Deals out roles, hands, and missions """
 
         self.create_oxygen()
@@ -27,7 +31,28 @@ class Game(object):
         self.reset = False
         random.shuffle(self.players)
         self.live_players = self.players[:]
+        # Create characters
+        characters = Deck(self)
+        for name in self.characters:
+            character = self.load_card(name, character_list)
+            if character:
+                characters.add(character(self))
+            else:
+                print("Character not found: " + name)
+        characters.shuffle()
+        # Create missions
+        missions = Deck(self)
+        for name in self.missions if chaos else self.missions[:len(self.players)]:
+            mission = self.load_card(name, mission_list)
+            if mission:
+                missions.add(mission(self))
+            else:
+                print("Mission not found: " + name)
+        missions.shuffle()
+        # Deal cards
         for player in self.players:
+            player.mission = missions.draw()[0]
+            player.character = characters.draw()[0]
             player.draw_up(2)
         self.active_player = self.players[0]
         self.command_pile.add(self.deck.draw())
@@ -60,10 +85,6 @@ class Game(object):
     def damage_oxygen(self):
         """ Damages an oxygen cell. """
 
-        #   FIXME addressing in card classes instead
-        # if self.safe:
-        #     # TODO: Red alert
-        #     return
         self.oxygen -= 1
         print("Oxygen cell destroyed: %s cells remaining." % self.oxygen)
         if self.oxygen <= 0:
@@ -123,12 +144,12 @@ class Game(object):
             print("Playing " + card.name)
             card.play()
 
-        #    TODO ablities and patching again
+        #    TODO abilities and patching again
 
         # Discard
-        if self.find_permanent_card("Engine Failure"):
-            self.deck.add(self.to_discard.remove_all())
-            self.deck.shuffle()
+        for card in self.find_all_malfunctions():
+            if hasattr(card, "on_discard"):
+                card.on_discard()
         while self.to_discard.size():
             card = player.prompt(self.to_discard.to_list(), True,
                                  prompt_string = "Choose first card to discard: ")
@@ -167,9 +188,8 @@ class Game(object):
         """ Removes a player from the game, ends game if needed """
 
         self.live_players.remove(player)
-        self.to_discard.add(player.hand.remove_all())
         print(player.name + " is dead!")
-        # check for game over
+        player.on_death()
 
     def find_permanent_card(self, name, excluded_player = None):
         """ Determines if a permanent card is in play """
@@ -179,6 +199,9 @@ class Game(object):
                 for card in player.permanents.to_list():
                     if card.name == name:
                         return card
+        for card in self.permanents.to_list():
+            if card.name == name:
+                return card
         return None
 
 
@@ -220,8 +243,8 @@ class Game(object):
             print("The saboteur was victorious!")
         self.reset = True
 
-    def load_card(self, name):
-        return getattr(card_list, name, False)
+    def load_card(self, name, module=card_list):
+        return getattr(module, name, False)
 
 
 if __name__ == '__main__':
