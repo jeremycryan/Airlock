@@ -86,7 +86,7 @@ class Impact(Card):
         self.is_malfunction = False
         Card.__init__(self, game, name)
 
-    def play(self):
+    def play(self, second_time = False):
         """ Method that occurs on play """
 
         #   Choose to damage character or oxygen supply
@@ -103,7 +103,11 @@ class Impact(Card):
         elif choice == 'Damage oxygen supply':
             self.game.damage_oxygen()
 
-        self.resolve()
+        #    Do it again if in red alert!
+        if (not second_time) and (self.game.is_red_alert()):
+            self.play(second_time = True)
+        else:
+            self.resolve()
 
     def resolve(self):
         """ What happens after the card gets played """
@@ -329,6 +333,7 @@ class Wormhole(Card):
             to_worm = player.prompt(player.hand.to_list(),
                 prompt_string = "Choose a card to put into the wormhole. ")
             if to_worm != None:
+                player.hand.remove(to_worm)
                 wormed.add(to_worm)
 
         #   Add a card from the top of the deck
@@ -408,8 +413,8 @@ class Repair(Card):
         """ Method that occurs on play """
         self.hidden = False
 
-        malfunctions = self.game.find_all_malfunctions
-        choice = self.active_player.prompt(malfunctions,
+        malfunctions = self.game.find_all_malfunctions()
+        choice = self.game.active_player.prompt(malfunctions,
             "Choose a malfunction to destroy. ")
         choice.destroy()
         self.resolve()

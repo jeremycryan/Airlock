@@ -146,7 +146,7 @@ class Game(object):
         """ Make it the next player's turn. """
 
         # Change players
-        i = self.players.index(player)
+        i = self.players.index(self.active_player)
         for j in range(1,len(self.players)):
             successor = self.players[(i+j)%len(self.players)]
             if successor in self.live_players and not successor.skipped:
@@ -204,7 +204,7 @@ class Game(object):
                     malfunctions.append(card)
 
         #   Looks through all malfunctions in global region
-        for card in self.global_permanents:
+        for card in self.global_permanents.to_list():
             if card.is_malfunction:
                 malfunctions.append(card)
 

@@ -41,7 +41,8 @@ class Player(object):
     def draw_up(self, handsize = 3):
         """ Draws up to the maximum hand size. """
 
-        self.draw_from_deck(handsize - self.hand.size())
+        if self.hand.size() < handsize:
+            self.draw_from_deck(handsize - self.hand.size())
 
     def discard(self, rand = False):
         """ Puts a card from the player's hand to the discard. """
