@@ -26,6 +26,8 @@ class Player(object):
         """ Take damage to the player. """
 
         self.health -= 1
+        print("Ouch! %s is at %s health." % (self.name, self.health))
+        
         if self.health < 1:
             self.game.kill(self)
 
