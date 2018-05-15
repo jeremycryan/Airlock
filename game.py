@@ -189,7 +189,7 @@ class Game(object):
 
         self.live_players.remove(player)
         print(player.name + " is dead!")
-        player.on_death()
+        player.mission.on_death()
 
     def find_permanent_card(self, name, excluded_player = None):
         """ Determines if a permanent card is in play """
