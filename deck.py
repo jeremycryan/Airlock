@@ -63,8 +63,11 @@ class Deck(object):
     def add(self, cards):
         """ Adds a list of cards to the hand. """
 
-        for card in cards:
-            self.cards.append(card)
+        if not hasattr(cards, __iter__):
+            self.cards.append(cards)
+        else:
+            for card in cards:
+                self.cards.append(card)
 
     def shuffle(self):
         """ Shuffles the deck. """

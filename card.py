@@ -8,4 +8,4 @@ class Card(object):
         self.name = name
 
     def __repr__(self):
-        return "Card: %s" % self.name
+        return self.name

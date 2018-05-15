@@ -13,11 +13,18 @@ class Player(object):
         self.game = game
         self.name = name
         self.hand = Deck(game)
+        self.permanents = Deck(game)
         self.max_hand_size = 3
 
 
     def __repr__(self):
         return "Player: %s" % self.name
+
+
+    def damage(self):
+        """ Take damage to the player. """
+
+        self.health -= 1    #   TODO account for death case
 
 
     def draw_from_deck(self, number):
@@ -58,6 +65,11 @@ class Player(object):
 
         #   TODO make this use a gui and generally be better
 
+        if len(choices) == 1:
+            return choices[0]
+        elif len(choices) == 0:
+            return None
+
         if prompt_string == None:
             prompt_string == 'Choose between: '
 
@@ -67,3 +79,5 @@ class Player(object):
         while choice not in choices:
             print("That's not a valid choice. Choose again.")
             choice = raw_input()
+
+        return choice
