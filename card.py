@@ -49,7 +49,7 @@ class Character(Card):
     def use_ability(self, ability):
         """ Attempt to use a given ability """
         if ability in self.abilities:
-            self.getattr(ability.replace(" ","_").lower())()
+            getattr(self, ability.replace(" ","_").lower())()
 
     def refresh(self):
         self.game.active_player.discard()

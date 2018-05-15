@@ -38,7 +38,7 @@ class Game(object):
             if character:
                 characters.add(character(self))
             else:
-                print("Character not found: " + name)
+                print("Character not found: %s" % name)
         characters.shuffle()
         # Create missions
         missions = Deck(self)
@@ -47,7 +47,7 @@ class Game(object):
             if mission:
                 missions.add(mission(self))
             else:
-                print("Mission not found: " + name)
+                print("Mission not found: %s" % name)
         missions.shuffle()
         # Deal cards
         for player in self.players:
@@ -115,7 +115,8 @@ class Game(object):
             if hasattr(card, "on_turn_start"):
                 card.on_turn_start()
 
-        #   TODO abilities and patching here
+        # Use abilities and patch malfunctions
+        spent = self.main_phase(player)
 
         # Play cards into command pile
         self.request_card(player)
@@ -144,7 +145,9 @@ class Game(object):
             print("Playing " + card.name)
             card.play()
 
-        #    TODO abilities and patching again
+        # Use abilities and patch malfunctions
+        if not spent:
+            self.main_phase(player)
 
         # Discard
         for card in self.find_all_malfunctions():
@@ -162,6 +165,27 @@ class Game(object):
 
         #   Go to the next player
         self.next_player()
+
+    def main_phase(self, player):
+        """ Gives player an opportunity to use energy """
+        energy = player.permanents.count("Energy")
+        if not energy:
+            return False
+        abilities = [name for name, value in player.character.abilities.items()
+                     if energy >= value]
+        if player.health < 2:
+            abilities = []
+        malfunctions = self.find_all_malfunctions()
+        # TODO: Malfunctions repr should include player name
+        # TODO: Malfunctions need patch function
+        abstain = ["Pass"]
+        choice = player.prompt(abilities+malfunctions+abstain,
+                               prompt_string = "How do you wish to use your energy? ")
+        if choice in malfunctions:
+            pass#choice.patch()
+        elif choice in abilities:
+            player.character.use_ability(choice)
+        return choice != abstain[0]
 
     def next_player(self):
         """ Make it the next player's turn. """
@@ -205,6 +229,13 @@ class Game(object):
                 return card
         return None
 
+    def get_player(self, card):
+        """ Determines which player a card belongs to """
+
+        for player in self.players:
+            if card in player.permanents.to_list() + player.hand.to_list():
+                return player
+        return None
 
     def find_controller(self, perm_card):
         """ Returns the player class for whoever owns the permanent. """

@@ -121,3 +121,8 @@ class Deck(object):
         """ Returns the number of cards in the deck """
         
         return len(self.cards)
+
+    def count(self, name):
+        """ Counts the occurences of specified card in the deck """
+
+        return sum(card.name == name for card in self.cards)

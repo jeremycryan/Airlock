@@ -528,16 +528,16 @@ class EngineFailure(Card):
 
     def destroy(self):
         """ Discards the card from play """
-
+        # TODO: shouldn't this always be a hard destroy?
         #   Remove card from play and send to discard queue
-        self.game.global_permanents.remove(self)
+        self.game.get_player(self).permanents.remove(self)
         self.game.to_discard.add(self)
 
     def hard_destroy(self):
         """ Discards the card from play, always sending to discard pile """
 
         #   Remove card from play and send to discard pile
-        self.game.global_permanents.remove(self)
+        self.game.get_player(self).permanents.remove(self)
         self.game.discard.add(self)
 
 
