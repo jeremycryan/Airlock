@@ -9,7 +9,7 @@ class Player(object):
     """ Player object, in case you couldn't tell from the line above. """
 
     def __init__(self, game, name):
-        self.alive = True
+        self.health = 2
         self.game = game
         self.name = name
         self.hand = Deck(game)
