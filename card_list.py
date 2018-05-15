@@ -336,6 +336,9 @@ class Wormhole(Card):
                 player.hand.remove(to_worm)
                 wormed.add(to_worm)
 
+        #   Send wormhole to discard queue
+        self.resolve()
+
         #   Add a card from the top of the deck
         wormed.add(self.game.deck.draw())
 
@@ -357,8 +360,6 @@ class Wormhole(Card):
                 to_play.play()
             else:
                 to_play.resolve()
-
-        self.resolve()
 
     def resolve(self):
         """ What happens after the card gets played """
@@ -416,7 +417,8 @@ class Repair(Card):
         malfunctions = self.game.find_all_malfunctions()
         choice = self.game.active_player.prompt(malfunctions,
             "Choose a malfunction to destroy. ")
-        choice.destroy()
+        if choice:
+            choice.destroy()
         self.resolve()
 
     def resolve(self):
@@ -457,3 +459,82 @@ class Contaminate(Card):
 
         #   Restore the oxygen that was contaminated
         self.game.repair_oxygen()
+
+
+class Overrule(Card):
+
+    def __init__(self, game):
+        name = 'Overrule'
+        self.color = 'blue'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+
+        #   Choose a card in player's hand
+        choice = self.game.active_player.prompt( \
+            self.game.active_player.hand.to_list(),
+            prompt_string = "Choose a card to play with Overrule. ")
+        self.game.stage.add(self.game.active_player.hand.remove(choice))
+
+        #   Send overrule to discard queue
+        self.resolve()
+
+        #   Play the selected card
+        choice.play()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
+
+
+class EngineFailure(Card):
+
+    def __init__(self, game):
+        name = 'Engine Failure'
+        self.color = 'red'
+        self.is_malfunction = True
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+
+        self.hidden = False
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove the card from stage and add to player permanents
+        self.game.active_player.permanents.add(self)
+        self.game.stage.remove(self)
+
+    def on_discard(self):
+        """ Method that affects behavior of discard phase """
+
+        self.game.deck.add(self.game.to_discard.remove_all())
+        self.game.deck.shuffle()
+
+    def on_turn_start(self):
+        """ This method is called at the start of the player's turn """
+
+        #   Remove the thing
+        self.hard_destroy()
+
+    def destroy(self):
+        """ Discards the card from play """
+
+        #   Remove card from play and send to discard queue
+        self.game.global_permanents.remove(self)
+        self.game.to_discard.add(self)
+
+    def hard_destroy(self):
+        """ Discards the card from play, always sending to discard pile """
+
+        #   Remove card from play and send to discard pile
+        self.game.global_permanents.remove(self)
+        self.game.discard.add(self)
