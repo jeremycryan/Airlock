@@ -653,12 +653,12 @@ class Execute(Card):
 
         #   Nominate a player
         nominee = self.game.active_player.prompt(self.game.live_players,
-            prompt_string = "Choose a player to execute.")
+            prompt_string = "Choose a player to execute. ")
 
         #   Everybody cast your votes!
         for player in player_list:
             choice = player.prompt(["Yes", "No"],
-                prompt_string = "Vote to kill %s?" % nominee)
+                prompt_string = "Vote to kill %s? " % nominee)
 
             if choice == "Yes":
                 print("%s has voted to kill %s." % (player, nominee))
