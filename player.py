@@ -3,7 +3,7 @@
 #   Python libraries
 import random
 
-from card_objects import Deck
+from deck import Deck
 
 class Player(object):
     """ Player object, in case you couldn't tell from the line above. """

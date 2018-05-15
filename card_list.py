@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from card_objects import Card
+from card import Card
 
 class CardName(Card):
 

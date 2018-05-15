@@ -5,16 +5,7 @@ import random
 
 #   Outside libraries
 import card_list
-
-class Card(object):
-    """   An airlock card object """
-
-    def __init__(self, game, name = 'energy'):
-        self.game = game
-        self.name = name
-
-    def __repr__(self):
-        return "Card: %s" % self.name
+from card import Card
 
 
 class Deck(object):
@@ -92,7 +83,7 @@ class Deck(object):
 
     def select(self, index=-1, replace=False):
         """ Takes a specified card from the deck """
-        
+
         if index >= len(self.cards) or index < -len(self.cards):
             return []
         card = self.cards[index]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from card_objects import Card, Deck
+from deck import Deck
+from card import Card
 from player import Player
 
 class Game(object):
