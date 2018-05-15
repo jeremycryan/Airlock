@@ -217,7 +217,7 @@ class Salvage(Card):
         """ Method that occurs on play """
 
         #   Look at three cards from the discard
-        salvaged = Deck(game)
+        salvaged = Deck(self.game)
         salvaged.add(self.game.discard.draw(3))
 
         choice = self.active_player.prompt(salvaged.to_list(),
@@ -255,6 +255,59 @@ class Override(Card):
         new_card = self.game.deck.draw()[0]
         self.game.stage.add(new_card)
         new_card.play()
+        self.resolve()
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
+
+
+class Wormhole(Card):
+
+    def __init__(self, game):
+        name = 'Wormhole'
+        color = 'red'
+        Card.__init__(game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+
+        wormed = Deck(self.game)
+
+        #   TODO more efficient way to do this simultaneously so I don't have
+        #   to wait for other players?
+        #   Each player adds a card to the wormhole
+        for player in self.game.players:
+            to_worm = player.prompt(player.hand.to_list(),
+                prompt_string = "Choose a card to put into the wormhole. ")
+            if to_worm != None:
+                wormed.add(to_worm)
+
+        #   Add a card from the top of the deck
+        wormed.add(self.game.deck.draw())
+
+        #   Discard a card at random
+        wormed.shuffle()
+        self.game.to_discard.add(wormed.draw())
+
+        #   Add wormhole cards to the stage
+        self.game.stage.add(wormed.to_list())
+
+        #   Play all cards in wormhole one by one
+        while len(wormed.to_list()) > 0:
+            to_play = self.active_player.prompt(wormed.to_list(),
+                "Choose a card to resolve. ")
+            wormed.remove(to_play)
+
+            #   Play the card only if it is red
+            if to_play.color == 'red':
+                to_play.play()
+            else:
+                to_play.resolve()
+
         self.resolve()
 
     def resolve(self):
