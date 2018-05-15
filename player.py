@@ -14,17 +14,20 @@ class Player(object):
         self.name = name
         self.hand = Deck(game)
         self.permanents = Deck(game)
-        self.max_hand_size = 3
+        self.next_ally = None
+        self.skipped = False
 
 
     def __repr__(self):
-        return "Player: %s" % self.name
+        return self.name
 
 
     def damage(self):
         """ Take damage to the player. """
 
-        self.health -= 1    #   TODO account for death case
+        self.health -= 1
+        if self.health < 1:
+            self.game.kill(self)
 
 
     def draw_from_deck(self, number):
@@ -35,31 +38,32 @@ class Player(object):
         self.hand.add(cards_drawn)
 
 
-    def draw_up(self):
+    def draw_up(self, handsize = 3):
         """ Draws up to the maximum hand size. """
 
-        self.draw_from_deck(self.max_hand_size - len(self.hand))
+        self.draw_from_deck(handsize - self.hand.size())
 
     def discard(self, rand = False):
         """ Puts a card from the player's hand to the discard. """
 
         #   Don't discard if you have no cards in hand
-        if len(self.hand) == 0:
+        if self.hand.size() == 0:
             return
 
         #   Select the card to be discarded
         if rand:
-            card_to_discard = random.choice(self.hand)
+            card_to_discard = random.choice(self.hand.to_list())
         else:
-            card_to_discard = self.prompt(self.hand,
+            card_to_discard = self.prompt(self.hand.to_list(),
                 prompt_string = "Choose a card to discard. ")
+            card_to_discard.hidden = False
 
         #   Remove the card from your hand and add it to the discard pile.
         self.hand.remove(card_to_discard)
-        self.game.discard.add([card_to_discard])
+        self.game.to_discard.add([card_to_discard])
 
 
-    def prompt(self, choices, prompt_string = None):
+    def prompt(self, choices, hidden = False, prompt_string = None):
         """ Somehow prompts the player to make a choice between items in a list.
         This could be through text or in a GUI. """
 
@@ -71,13 +75,18 @@ class Player(object):
             return None
 
         if prompt_string == None:
-            prompt_string == 'Choose between: '
-
-        print(prompt_string + str(choices))
-        choice = raw_input()
-
-        while choice not in choices:
+            prompt_string = 'Choose between: '
+        if hidden:
+            choice_strings = [c.visible_name() for c in choices]
+        else:
+            choice_strings = [str(c) for c in choices]
+        print(prompt_string + ", ".join(choice_strings))
+        choice = input()
+        while choice not in choice_strings:
+            if choice.isdigit():
+                if int(choice) > 0 and int(choice) <= len(choices):
+                    return choices[int(choice)-1]
             print("That's not a valid choice. Choose again.")
-            choice = raw_input()
+            choice = input()
 
-        return choice
+        return choices[choice_strings.index(choice)]

@@ -4,7 +4,6 @@
 import random
 
 #   Outside libraries
-import card_list
 from card import Card
 
 
@@ -25,35 +24,36 @@ class Deck(object):
         """ Adds the default deck. """
 
         #   Populates the deck
-        self.add_card('Energy', 13)
-        self.add_card('Impact', 7)
-        self.add_card('Rupture', 5)
-        self.add_card('Aftershock', 3)
-        self.add_card('Salvage', 2)
-        self.add_card('Safeguard', 2)
-        self.add_card('HullBreach', 3)
-        self.add_card('Recycle', 3)
-        self.add_card('Airlock', 1)
-        self.add_card('Martyr', 1)
-        self.add_card('Override', 3)
-        self.add_card('Overrule', 3)
-        self.add_card('Discharge', 3)
-        self.add_card('Wormhole', 2)
+        self.create('Energy', 13)
+        self.create('Impact', 7)
+        self.create('Rupture', 5)
+        self.create('Aftershock', 3)
+        self.create('Salvage', 2)
+        self.create('Safeguard', 2)
+        self.create('HullBreach', 3)
+        self.create('Recycle', 3)
+        self.create('Airlock', 1)
+        self.create('Martyr', 1)
+        self.create('Override', 3)
+        self.create('Overrule', 3)
+        self.create('Discharge', 3)
+        self.create('Wormhole', 2)
 
         #   Add expansion cards if expansion is enabled
         if expansion:
-            self.add_card('EngineFailure', 2)
-            self.add_card('Nullify', 3)
-            self.add_card('Inflict', 2)
-            self.add_card('Repair', 2)
-            self.add_card('Contaminate', 2)
-            self.add_card('Execute', 1)
-            self.add_card('Shift', 3)
+            self.create('EngineFailure', 2)
+            self.create('Nullify', 3)
+            self.create('Inflict', 2)
+            self.create('Repair', 2)
+            self.create('Contaminate', 2)
+            self.create('Execute', 1)
+            self.create('Shift', 3)
+        self.shuffle()
 
-    def add_card(self, name, num=1):
+    def create(self, name, num=1):
         """ Adds 'num' cards of name 'name' to the deck. """
 
-        card = getattr(card_list, name, False)
+        card = self.game.load_card(name)
         if not card:
             print("Card class not found: " + name)
             return
@@ -61,9 +61,9 @@ class Deck(object):
             self.cards.append(card(self.game))
 
     def add(self, cards):
-        """ Adds a list of cards to the hand. """
+        """ Adds a list of cards to the deck. """
 
-        if not hasattr(cards, __iter__):
+        if not hasattr(cards, "__iter__"):
             self.cards.append(cards)
         else:
             for card in cards:
@@ -77,31 +77,47 @@ class Deck(object):
     def draw(self, num=1, replace=False):
         """ Takes the top card(s) from the deck, as a list """
 
+        if num < 1:
+            return []
         if num > len(self.cards):
             num = len(self.cards)
         cards = self.cards[-num:]
-        if replace:
+        if not replace:
             self.cards = self.cards[:-num]
         return cards
 
     def select(self, index=-1, replace=False):
-        """ Takes a specified card from the deck """
+        """ Takes a specified card from the deck, as a list """
 
         if index >= len(self.cards) or index < -len(self.cards):
             return []
         card = self.cards[index]
         if replace:
             del self.cards[index]
-        return card
+        return [card]
 
     def remove(self, card):
-        """  """
+        """ Takes a given card from the deck, as a list """
         if card in self.cards:
             self.cards.remove(card)
         else:
             print("Card could not be discarded: " + str(card))
+            return []
+        return [card]
+
+    def remove_all(self):
+        """ Takes all cards from the deck, as a list """
+        
+        cards = self.cards
+        self.cards = []
+        return cards
 
     def to_list(self):
-        """ Returns the cards in the deck as a list """
+        """ Returns the cards in the deck, as a list """
 
         return self.cards[:]
+
+    def size(self):
+        """ Returns the number of cards in the deck """
+        
+        return len(self.cards)

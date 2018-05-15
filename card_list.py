@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
 from card import Card
+from deck import Deck
 
 class CardName(Card):
 
     def __init__(self, game):
         name = 'cardname'
-        color = 'green'
-        Card.__init__(game, name)
+        self.color = 'green'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
+        self.hidden = False
         self.resolve()
 
     def resolve(self):
@@ -25,13 +27,14 @@ class Rupture(Card):
 
     def __init__(self, game):
         name = 'Rupture'
-        color = 'red'
-        Card.__init__(game, name)
+        self.color = 'red'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
 
         #   Damage the ship if it isn't protected, or if it's red alert.
+        self.hidden = False
         if (not self.game.oxygen_protected) or (self.game.is_red_alert()):
             self.game.damage_oxygen()
 
@@ -49,13 +52,14 @@ class Recycle(Card):
 
     def __init__(self, game):
         name = 'Recycle'
-        color = 'blue'
-        Card.__init__(game, name)
+        self.color = 'blue'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
 
         #   Draw a card from the deck
+        self.hidden = False
         self.game.active_player.draw_from_deck(1)
 
         #   Active player discards a card
@@ -75,17 +79,20 @@ class Impact(Card):
 
     def __init__(self, game):
         name = 'Impact'
-        color = 'red'
-        Card.__init__(game, name)
+        self.color = 'red'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
-
+        
         #   Choose to damage character or oxygen supply
-        choice = self.game.active_player.prompt(['Damage self',
-            'Damage oxygen supply'],
-            prompt_string = "Choose where to apply damage. ")
-
+        self.hidden = False
+        if self.game.active_player in self.game.live_players:
+            choice = self.game.active_player.prompt(['Damage self',
+                'Damage oxygen supply'],
+                prompt_string = "Choose where to apply damage. ")
+        else:
+            choice = 'Damage oxygen supply'
         #   Execute choice
         if choice == 'Damage self':
             self.game.active_player.damage()
@@ -106,17 +113,20 @@ class Aftershock(Card):
 
     def __init__(self, game):
         name = 'Aftershock'
-        color = 'red'
-        Card.__init__(game, name)
+        self.color = 'red'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
 
         #   Choose to damage character or oxygen supply
-        choice = self.game.active_player.prompt(['Damage self',
-            'Return %s to command pile' % self.name],
-            prompt_string = "Choose what to do with %s. " % self.name)
-
+        self.hidden = False
+        if self.game.active_player in self.game.live_players:
+            choice = self.game.active_player.prompt(['Damage self',
+                'Return %s to command pile' % self.name],
+                prompt_string = "Choose what to do with %s. " % self.name)
+        else:
+            choice = 'Return %s to command pile' % self.name
         #   Execute choice
         if choice == 'Damage self':
             self.game.active_player.damage()
@@ -143,11 +153,12 @@ class HullBreach(Card):
 
     def __init__(self, game):
         name = 'Hull Breach'
-        color = 'red'
-        Card.__init__(game, name)
+        self.color = 'red'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
+        self.hidden = False
         self.resolve()
 
     def resolve(self):
@@ -171,11 +182,12 @@ class Energy(Card):
 
     def __init__(self, game):
         name = 'Energy'
-        color = 'blue'
-        Card.__init__(game, name)
+        self.color = 'blue'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
+        self.hidden = False
         self.resolve()
 
     def resolve(self):
@@ -190,11 +202,12 @@ class Safeguard(Card):
 
     def __init__(self, game):
         name = 'Safeguard'
-        color = 'blue'
-        Card.__init__(game, name)
+        self.color = 'blue'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
+        self.hidden = False
         self.game.oxygen_protected = True
         self.resolve()
 
@@ -210,17 +223,18 @@ class Salvage(Card):
 
     def __init__(self, game):
         name = 'Salvage'
-        color = 'blue'
-        Card.__init__(game, name)
+        self.color = 'blue'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
 
         #   Look at three cards from the discard
+        self.hidden = False
         salvaged = Deck(self.game)
         salvaged.add(self.game.discard.draw(3))
 
-        choice = self.active_player.prompt(salvaged.to_list(),
+        choice = self.game.active_player.prompt(salvaged.to_list(),
             prompt_string = "Choose a card to salvage. ")
 
         #   Add the other cards back to the discard pile
@@ -229,6 +243,8 @@ class Salvage(Card):
 
         #   Shuffle the salvaged card into the deck
         self.game.deck.add(choice)
+        if choice:
+            choice.hidden = True
         self.game.deck.shuffle()
 
         self.resolve()
@@ -245,15 +261,17 @@ class Override(Card):
 
     def __init__(self, game):
         name = 'Override'
-        color = 'red'
-        Card.__init__(game, name)
+        self.color = 'red'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
 
         #   Automatically play the top card of the deck
+        self.hidden = False
         new_card = self.game.deck.draw()[0]
         self.game.stage.add(new_card)
+        print("Playing " + new_card.name)
         new_card.play()
         self.resolve()
 
@@ -269,18 +287,19 @@ class Wormhole(Card):
 
     def __init__(self, game):
         name = 'Wormhole'
-        color = 'red'
-        Card.__init__(game, name)
+        self.color = 'red'
+        Card.__init__(self, game, name)
 
     def play(self):
         """ Method that occurs on play """
-
+        
+        self.hidden = False
         wormed = Deck(self.game)
 
         #   TODO more efficient way to do this simultaneously so I don't have
         #   to wait for other players?
         #   Each player adds a card to the wormhole
-        for player in self.game.players:
+        for player in self.game.live_players:
             to_worm = player.prompt(player.hand.to_list(),
                 prompt_string = "Choose a card to put into the wormhole. ")
             if to_worm != None:
@@ -298,8 +317,8 @@ class Wormhole(Card):
 
         #   Play all cards in wormhole one by one
         while len(wormed.to_list()) > 0:
-            to_play = self.active_player.prompt(wormed.to_list(),
-                "Choose a card to resolve. ")
+            to_play = self.game.active_player.prompt(wormed.to_list(),
+                prompt_string = "Choose a card to resolve. ")
             wormed.remove(to_play)
 
             #   Play the card only if it is red
