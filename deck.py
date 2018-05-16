@@ -10,15 +10,15 @@ from card import Card
 class Deck(object):
     """   A deck of airlock cards """
 
-    def __init__(self, game, expansion = True, is_main_deck = False):
+    def __init__(self, game, name="temp", expansion = True, is_main_deck = False):
         self.game = game
         self.cards = []
-
+        self.name = name
         if is_main_deck:
             self.populate(expansion)
 
     def __repr__(self):
-        return "Deck object containing %s cards." % len(self.cards)
+        return self.name
 
     def populate(self, expansion = True):
         """ Adds the default deck. """
@@ -73,6 +73,7 @@ class Deck(object):
         """ Shuffles the deck. """
 
         random.shuffle(self.cards)
+        self.game.publish(self.game.players, "shuffle", self)
 
     def draw(self, num=1, replace=False):
         """ Takes the top card(s) from the deck, as a list """
@@ -101,7 +102,8 @@ class Deck(object):
         if card in self.cards:
             self.cards.remove(card)
         else:
-            print("Card could not be discarded: " + str(card))
+            if card:
+                print("Card could not be discarded: " + str(card))
             return []
         return [card]
 
@@ -121,3 +123,19 @@ class Deck(object):
         """ Returns the number of cards in the deck """
         
         return len(self.cards)
+
+    def count(self, name):
+        """ Counts the occurences of specified card in the deck """
+
+        return sum(card.name == name for card in self.cards)
+
+    def find(self, name, num = 1, replace = False):
+        """ Returns cards by name, num = -1 returns all instances """
+        found = []
+        for card in self.cards:
+            if card.name == name:
+                if num > len(found) or num < 0:
+                    if not replace:
+                        self.cards.remove(card)
+                    found += [card]
+        return found

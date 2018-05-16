@@ -16,13 +16,6 @@ class CardName(Card):
         self.hidden = False
         self.resolve()
 
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
-
 
 class Rupture(Card):
 
@@ -75,13 +68,6 @@ class Recycle(Card):
 
         self.resolve()
 
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
-
 
 class Impact(Card):
 
@@ -114,14 +100,6 @@ class Impact(Card):
         else:
             self.resolve()
 
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
-
-
 class Aftershock(Card):
 
     def __init__(self, game):
@@ -153,24 +131,21 @@ class Aftershock(Card):
     def resolve(self):
         """ What happens after the card gets played """
 
-        #   Remove card from stage
-        self.game.stage.remove(self)
-
         #   Send card to correct zone
         if self.destination == 'discard':
-            self.game.to_discard.add(self)
+            self.game.move_card(self, self.game.stage, self.game.to_discard)
         elif self.destination == 'command':
-            self.game.command_pile.add(self)
+            self.game.move_card(self, self.game.stage, self.game.command_pile)
 
 
 class HullBreach(Card):
-    #   TODO Make possible to patch
 
     def __init__(self, game):
         name = 'Hull Breach'
         self.color = 'red'
         self.is_malfunction = True
         Card.__init__(self, game, name)
+        self.patched = 0
 
     def play(self):
         """ Method that occurs on play """
@@ -180,11 +155,9 @@ class HullBreach(Card):
     def resolve(self):
         """ What happens after the card gets played """
 
-        #   Remove card from stage
-        self.game.stage.remove(self)
-
         #   Send card to correct zone
-        self.game.active_player.permanents.add(self)
+        self.game.move_card(self, self.game.stage, self.game.active_player.permanents)
+
 
     def on_turn_start(self):
         """ This method is called at the start of the player's turn """
@@ -196,9 +169,14 @@ class HullBreach(Card):
     def destroy(self):
         """ Discards the malfunction from play. """
 
-        owner = self.game.find_controller(self)
-        owner.permanents.remove(self)
-        self.game.to_discard.add(self)
+        owner = self.game.get_player(self)
+        self.game.move_card(self, owner.permanents, self.game.to_discard)
+
+    def patch(self):
+        """ Patch the malfunction """
+        self.patched += 1
+        if self.patched >= 2:
+            self.destroy()
 
 
 class Energy(Card):
@@ -217,16 +195,14 @@ class Energy(Card):
     def resolve(self):
         """ What happens after the card gets played """
 
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.active_player.permanents.add(self)
+        #   Remove card from stage and add to permanents
+        self.game.move_card(self, self.game.stage, self.game.active_player.permanents)
 
     def destroy(self):
         """ Discards the card from play. """
 
-        owner = self.game.find_controller(self)
-        owner.permanents.remove(self)
-        self.game.to_discard.add(self)
+        owner = self.game.get_player(self)
+        self.game.move_card(self, owner.permanents, self.game.to_discard)
 
 
 class Safeguard(Card):
@@ -243,13 +219,6 @@ class Safeguard(Card):
         self.game.safe_next_turn = True
         self.resolve()
 
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
-
 
 class Salvage(Card):
 
@@ -265,29 +234,18 @@ class Salvage(Card):
         #   Look at three cards from the discard
         self.hidden = False
         salvaged = Deck(self.game)
-        salvaged.add(self.game.discard.draw(3))
+        salvaged.add(self.game.discard.draw(3, True))
 
         choice = self.game.active_player.prompt(salvaged.to_list(),
             prompt_string = "Choose a card to salvage. ")
 
-        #   Add the other cards back to the discard pile
-        salvaged.remove(choice)
-        self.game.discard.add(salvaged.to_list())
-
         #   Shuffle the salvaged card into the deck
-        self.game.deck.add(choice)
+        self.game.move_card(choice, self.game.discard, self.game.deck)
         if choice:
             choice.hidden = True
         self.game.deck.shuffle()
 
         self.resolve()
-
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
 
 
 class Override(Card):
@@ -303,18 +261,11 @@ class Override(Card):
 
         #   Automatically play the top card of the deck
         self.hidden = False
-        new_card = self.game.deck.draw()[0]
-        self.game.stage.add(new_card)
+        new_card = self.game.draw_card(self.game.deck, self.game.stage)[0]
         print("Playing " + new_card.name)
+        self.game.publish(self.game.players, "play", new_card)
         new_card.play()
         self.resolve()
-
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
 
 
 class Wormhole(Card):
@@ -338,40 +289,34 @@ class Wormhole(Card):
             to_worm = player.prompt(player.hand.to_list(),
                 prompt_string = "Choose a card to put into the wormhole. ")
             if to_worm != None:
-                player.hand.remove(to_worm)
-                wormed.add(to_worm)
+                self.game.move_card(to_worm, player.hand, wormed)
 
         #   Send wormhole to discard queue
         self.resolve()
 
         #   Add a card from the top of the deck
-        wormed.add(self.game.deck.draw())
+        self.game.draw_card(self.game.deck, wormed)
 
         #   Discard a card at random
         wormed.shuffle()
-        self.game.to_discard.add(wormed.draw())
+        self.game.move_card(wormed, self.game.to_discard)
 
         #   Add wormhole cards to the stage
-        self.game.stage.add(wormed.to_list())
+        cards = wormed.cards[:]
+        self.game.move_all(wormed, self.game.stage)
 
         #   Play all cards in wormhole one by one
-        while len(wormed.to_list()) > 0:
-            to_play = self.game.active_player.prompt(wormed.to_list(),
+        while len(cards) > 0:
+            to_play = self.game.active_player.prompt(cards,
                 prompt_string = "Choose a card to resolve. ")
             wormed.remove(to_play)
 
             #   Play the card only if it is red
             if to_play.color == 'red':
+                self.game.publish(self.game.players, "play", to_play)
                 to_play.play()
             else:
                 to_play.resolve()
-
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
 
 
 class Discharge(Card):
@@ -399,13 +344,6 @@ class Discharge(Card):
 
         self.resolve()
 
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
-
 
 class Repair(Card):
 
@@ -426,13 +364,6 @@ class Repair(Card):
             choice.destroy()
         self.resolve()
 
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
-
 
 class Contaminate(Card):
 
@@ -452,18 +383,20 @@ class Contaminate(Card):
 
         #   Remove card from stage and add to global permanents, and reduce the
         #   oxygen cell count by 1
-        self.game.stage.remove(self)
-        self.game.global_permanents.add(self)
+        self.game.move_card(self, self.game.stage, self.game.global_permanents)
         self.game.damage_oxygen()
 
     def destroy(self):
         """ Discards the card from play """
 
-        self.game.global_permanents.remove(self)
-        self.game.to_discard.add(self)
+        self.game.move_card(self, self.game.global_permanents, self.game.to_discard)
 
         #   Restore the oxygen that was contaminated
         self.game.repair_oxygen()
+
+    def patch(self):
+        """ Patch the malfunction """
+        self.destroy()
 
 
 class Overrule(Card):
@@ -482,20 +415,13 @@ class Overrule(Card):
         choice = self.game.active_player.prompt( \
             self.game.active_player.hand.to_list(),
             prompt_string = "Choose a card to play with Overrule. ")
-        self.game.stage.add(self.game.active_player.hand.remove(choice))
-
+        self.game.move_card(choice, self.game.active_player.hand, self.game.stage)
         #   Send overrule to discard queue
         self.resolve()
 
         #   Play the selected card
+        self.game.publish(self.game.players, "play", choice)
         choice.play()
-
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
 
 
 class EngineFailure(Card):
@@ -516,13 +442,12 @@ class EngineFailure(Card):
         """ What happens after the card gets played """
 
         #   Remove the card from stage and add to player permanents
-        self.game.active_player.permanents.add(self)
-        self.game.stage.remove(self)
+        self.game.move_card(self, self.game.stage, self.game.active_player.permanents)
 
     def on_discard(self):
         """ Method that affects behavior of discard phase """
 
-        self.game.deck.add(self.game.to_discard.remove_all())
+        self.game.move_all(self.game.to_discard, self.game.deck)
         self.game.deck.shuffle()
 
     def on_turn_start(self):
@@ -533,18 +458,18 @@ class EngineFailure(Card):
 
     def destroy(self):
         """ Discards the card from play """
-
         #   Remove card from play and send to discard queue
-        self.game.global_permanents.remove(self)
-        self.game.to_discard.add(self)
+        self.game.move_card(self,self.game.get_player(self).permanents, self.game.to_discard)
 
     def hard_destroy(self):
         """ Discards the card from play, always sending to discard pile """
 
         #   Remove card from play and send to discard pile
-        self.game.global_permanents.remove(self)
-        self.game.discard.add(self)
+        self.game.move_card(self,self.game.get_player(self).permanents, self.game.discard)
 
+    def patch(self):
+        """ Patch the malfunction """
+        self.destroy()
 
 class Inflict(Card):
 
@@ -576,17 +501,12 @@ class Inflict(Card):
             self.game.active_player.damage()
         elif choice == "Reveal mission":
             self.game.active_player.mission.visible = True
+            self.game.publish(self.game.players, "reveal",
+                              self.game.active_player, self.game.active_player.mission)
             print("%s has revealed as %s!" % (self.game.active_player,
                 self.game.active_player.mission.name))
 
         self.resolve()
-
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
 
 
 class Airlock(Card):
@@ -628,13 +548,6 @@ class Airlock(Card):
                 break
 
         self.resolve()
-
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
 
 
 class Execute(Card):
@@ -679,10 +592,3 @@ class Execute(Card):
             print("%s has been killed." % nominee)
 
         self.resolve()
-
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
