@@ -49,6 +49,11 @@ class Rupture(Card):
         self.game.stage.remove(self)
         self.game.to_discard.add(self)
 
+    def immune_to_cancel(self):
+        """ Determines whether the card effect can be prevented,
+        e.g. by nullify """
+
+        return self.game.is_red_alert()
 
 class Recycle(Card):
 
