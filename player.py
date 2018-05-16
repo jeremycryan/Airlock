@@ -12,8 +12,8 @@ class Player(object):
         self.health = 2
         self.game = game
         self.name = name
-        self.hand = Deck(game)
-        self.permanents = Deck(game)
+        self.hand = Deck(game, "%s Hand" % name)
+        self.permanents = Deck(game, "%s Permanents" % name)
         self.next_ally = None
         self.skipped = False
         self.mission = "Crew"
@@ -29,7 +29,7 @@ class Player(object):
 
         self.health -= 1
         print("Ouch! %s is at %s health." % (self.name, self.health))
-        
+        self.game.publish(self.game.players, "damage", self, self.health)
         if self.health < 1:
             self.game.kill(self)
 
@@ -37,16 +37,15 @@ class Player(object):
     def draw_from_deck(self, number):
         """ Draws a number of cards from the deck
         and adds them to the player's hand. """
-
-        cards_drawn = self.game.deck.draw(number)
-        self.hand.add(cards_drawn)
+        
+        self.game.draw_card(self.game.deck, self.hand, number)
 
 
     def draw_up(self, handsize = 3):
         """ Draws up to the maximum hand size. """
 
         if self.hand.size() < handsize:
-            self.draw_from_deck(handsize - self.hand.size())
+            self.game.draw_card(self.game.deck, self.hand, handsize - self.hand.size())
 
     def discard(self, rand = False):
         """ Puts a card from the player's hand to the discard. """
@@ -64,8 +63,7 @@ class Player(object):
             card_to_discard.hidden = False
 
         #   Remove the card from your hand and add it to the discard pile.
-        self.hand.remove(card_to_discard)
-        self.game.to_discard.add([card_to_discard])
+        self.game.move_card(card_to_discard, self.hand, self.game.to_discard)
 
 
     def prompt(self, choices, hidden = False, prompt_string = None):

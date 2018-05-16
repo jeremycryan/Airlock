@@ -10,15 +10,15 @@ from card import Card
 class Deck(object):
     """   A deck of airlock cards """
 
-    def __init__(self, game, expansion = True, is_main_deck = False):
+    def __init__(self, game, name="temp", expansion = True, is_main_deck = False):
         self.game = game
         self.cards = []
-
+        self.name = name
         if is_main_deck:
             self.populate(expansion)
 
     def __repr__(self):
-        return "Deck object containing %s cards." % len(self.cards)
+        return self.name
 
     def populate(self, expansion = True):
         """ Adds the default deck. """
@@ -73,6 +73,7 @@ class Deck(object):
         """ Shuffles the deck. """
 
         random.shuffle(self.cards)
+        self.game.publish(self.game.players, "shuffle", self)
 
     def draw(self, num=1, replace=False):
         """ Takes the top card(s) from the deck, as a list """

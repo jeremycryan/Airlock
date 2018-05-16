@@ -14,6 +14,12 @@ class Card(object):
     def visible_name(self):
         return "Unknown" if self.hidden else self.name
 
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.move_card(self, self.game.stage, self.game.to_discard)
+
 
 class Mission(Card):
     """ Represents a player's Mission card """
@@ -29,8 +35,8 @@ class Mission(Card):
         if self.game.get_player(self) is self.game.active_player:
             for card in self.game.active_player.hand.to_list():
                 card.hidden = False
-        self.game.to_discard.add(self.game.get_player(self).hand.remove_all())
-        self.game.to_discard.add(self.game.get_player(self).permanents.remove_all())
+        self.game.move_all(self.game.get_player(self).hand, self.game.to_discard)
+        self.game.move_all(self.game.get_player(self).permanents, self.game.to_discard)
         self.visible = True
         if not self.can_die:
             if self.is_red:
@@ -61,3 +67,4 @@ class Character(Card):
     def refresh(self):
         self.game.active_player.discard()
         self.game.active_player.draw_from_deck(1)
+        self.game.publish(self.game.players, "ability", "Refresh")
