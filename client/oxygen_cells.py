@@ -46,8 +46,8 @@ class OxygenCells(object):
             self.oxygen_cards.append(render)
 
         #   Makes a position for the surface
-        x = int(OXYGEN_POS[0] * WINDOW_WIDTH - surf_width/2)
-        y = int(OXYGEN_POS[1] * WINDOW_HEIGHT - surf_height/2)
+        x = int(OXYGEN_POS[0] - surf_width/2)
+        y = int(OXYGEN_POS[1] - surf_height/2)
         self.pos = (x, y)
 
     def get_oxygen_surface(self):
@@ -58,10 +58,14 @@ class OxygenCells(object):
 
         #   Draw each cell onto the surface, but make it damaged if it is
         #   damaged.
+
         for item in self.oxygen_cards[-self.count:]:
             item.draw()
-        for item in self.damaged_oxygen_cards[0:-self.count]:
+        for item in self.damaged_oxygen_cards[:-self.count]:
             item.draw()
+        if self.count == 0:
+            for item in self.damaged_oxygen_cards[:]:
+                item.draw()
 
         #   Return the surface
         return self.oxygen_surface
@@ -76,4 +80,4 @@ class OxygenCells(object):
         """ Destroys a number of oxygen cell cards. A negative number will
         restore cells. """
 
-        self.count -= n
+        self.count = max(0, self.count - 1)
