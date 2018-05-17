@@ -59,10 +59,10 @@ class Character(Card):
     def use_ability(self, ability):
         """ Attempt to use a given ability """
         if ability in self.abilities:
-            getattr(self, ability.replace(" ","_").lower())()
             for energy in self.game.get_player(self).permanents.find(
-                "Energy", True, self.abilities[ability]):
+                "Energy", self.abilities[ability], True):
                 energy.destroy()
+            getattr(self, ability.replace(" ","_").lower())()
 
     def refresh(self):
         self.game.active_player.discard()

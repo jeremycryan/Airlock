@@ -107,7 +107,7 @@ class Game(object):
         """ Creates the oxygen cells. """
 
         self.oxygen = len(self.cell_types)
-        self.force_red = False
+        self.force_red = 0
         self.safe_next_turn = False
         self.oxygen_protected = False
 
@@ -130,8 +130,9 @@ class Game(object):
 
     def is_red_alert(self):
         """ Returns True if the current oxygen cell is a red alert cell """
-
-        return self.cell_types[self.oxygen-1].lower() == 'r' or self.force_red
+        if self.force_red:
+            return self.force_red > 0
+        return self.cell_types[self.oxygen-1].lower() == 'r'
 
     def take_turn(self):
         """ Carries out a single turn """
@@ -181,6 +182,7 @@ class Game(object):
                 return
 
         # Use abilities and patch malfunctions
+        self.force_red = 0
         if not spent and player in self.live_players:
             self.main_phase(player)
 
@@ -377,5 +379,8 @@ if __name__ == '__main__':
     game.add_player('Paul')
     game.add_player('Daniel')
     game.add_player('Jeremy')
+    game.add_player('Nick')
+    game.add_player('Nick2')
+    game.add_player('Nick3')
     while 1:
         game.main()

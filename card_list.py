@@ -99,8 +99,11 @@ class Aftershock(Card):
     def play(self):
         """ Method that occurs on play """
 
-        #   Choose to damage character or oxygen supply
+        #   Damage ship
         self.hidden = False
+        if not self.game.oxygen_protected:
+            self.game.damage_oxygen()
+        #   Choose to damage character or oxygen supply
         if self.game.active_player in self.game.live_players:
             choice = self.game.active_player.prompt(['Damage self',
                 'Return %s to command pile' % self.name],
