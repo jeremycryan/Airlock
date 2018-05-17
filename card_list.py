@@ -258,10 +258,12 @@ class Override(Card):
 
         #   Automatically play the top card of the deck
         self.hidden = False
-        new_card = self.game.draw_card(self.game.deck, self.game.stage)[0]
-        print("Playing " + new_card.name)
-        self.game.publish(self.game.players, "play", new_card)
-        new_card.play()
+        new_card = self.game.draw_card(self.game.deck, self.game.stage)
+        if len(new_card):
+            new_card = new_card[0]
+            print("Playing " + new_card.name)
+            self.game.publish(self.game.players, "play", new_card)
+            new_card.play()
         self.resolve()
 
 
@@ -590,5 +592,58 @@ class Execute(Card):
             self.game.kill(nominee)
             print("%s has been killed." % nominee)
 
+        self.resolve()
+        
+class Shift(Card):
+
+    def __init__(self, game):
+        name = 'Shift'
+        self.color = 'blue'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+        player = self.game.active_player
+        if player.health == 2:
+            options = list(player.character.abilities.keys())
+            choice = player.prompt(options,
+                                   prompt_string = "Choose an ability to activate. ")
+            player.character.use_ability(choice)
+        self.resolve()
+
+class Martyr(Card):
+
+    def __init__(self, game):
+        name = 'Martyr'
+        self.color = 'green'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+        self.resolve()
+
+class Nullify(Card):
+
+    def __init__(self, game):
+        name = 'Nullify'
+        self.color = 'blue'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+        self.priority = 1
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+        cards = self.game.stage.to_list()
+        cards.remove(self)
+        if len(cards):
+            player = self.game.active_player
+            target = player.prompt(cards,
+                                   prompt_string = "Choose a card to nullify. ")
+            self.game.move_card(target, self.game.stage, self.game.to_discard)
         self.resolve()
 

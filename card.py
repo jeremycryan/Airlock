@@ -6,6 +6,7 @@ class Card(object):
     def __init__(self, game, name = 'Energy'):
         self.game = game
         self.name = name
+        self.priority = 0
         self.hidden = True
 
     def __repr__(self):
@@ -43,7 +44,6 @@ class Mission(Card):
                 self.game.end_game(True)
             else:
                 self.game.end_game(False)
-
 
 class Character(Card):
     """ Represents a player's Character card """

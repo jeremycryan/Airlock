@@ -117,9 +117,15 @@ class Game(object):
         self.oxygen -= 1
         print("Oxygen cell destroyed: %s cells remaining." % self.oxygen)
         self.publish(self.players, "oxygen", self.oxygen)
-        if self.oxygen <= 0:
-            self.end_game(False)
-            # TODO: Check for martyr
+        if self.oxygen == 1:
+            if self.check_martyr(False):
+                self.damage_oxygen()
+                return
+        if self.oxygen == 0:
+            if self.check_martyr(True):
+                self.repair_oxygen()
+            else:
+                self.end_game(False)
 
     def repair_oxygen(self):
         """ Adds one to the oxygen supply. """
@@ -127,12 +133,17 @@ class Game(object):
         self.oxygen += 1
         print("Oxygen cell restored: %s cells remaining." % self.oxygen)
         self.publish(self.players, "oxygen", self.oxygen)
+        if self.oxygen == 1:
+            if self.check_martyr(False):
+                self.damage_oxygen()
+                return
 
     def is_red_alert(self):
         """ Returns True if the current oxygen cell is a red alert cell """
         if self.force_red:
             return self.force_red > 0
-        return self.cell_types[self.oxygen-1].lower() == 'r'
+
+        return self.cell_types[max(0,self.oxygen-1)].lower() == 'r'
 
     def take_turn(self):
         """ Carries out a single turn """
@@ -171,9 +182,13 @@ class Game(object):
         # Play cards from command pile
         self.draw_card(self.command_pile, self.stage, 3 if self.is_red_alert() else 2)
         self.draw_card(self.command_pile, self.to_discard, self.command_pile.size()-1)
-        #TODO nullify
         while self.stage.size():
-            card = player.prompt(self.stage.to_list(),
+            options = self.stage.to_list()
+            max_priority = max([card.priority for card in options])
+            for card in options[:]:
+                if card.priority < max_priority:
+                    options.remove(card)
+            card = player.prompt(options,
                           prompt_string = "Choose first card to activate: ")
             print("Playing " + card.name)
             self.publish(self.players, "play", card)
@@ -350,6 +365,23 @@ class Game(object):
         return malfunctions
 
 
+    def check_martyr(self, crew = True):
+        """ Determines if martyr exists, and acts accordingly """
+        for player in self.live_players:
+            for card in player.hand.to_list():
+                if card.name == "Martyr":
+                    if player.mission.is_red != crew:
+                        self.move_card(card, player.hand, self.stage)
+                        card.play()
+                        if crew:
+                            self.kill(player)
+                            print("%s died to save the last oxygen cell" % player)
+                        else:
+                            print("%s died to destroy the last oxyge cell" % player)
+                        return True
+        return False
+
+        
     def end_game(self, crew_won):
         """ Handle end of game cleanup """
         if self.reset:
@@ -379,8 +411,5 @@ if __name__ == '__main__':
     game.add_player('Paul')
     game.add_player('Daniel')
     game.add_player('Jeremy')
-    game.add_player('Nick')
-    game.add_player('Nick2')
-    game.add_player('Nick3')
     while 1:
         game.main()
