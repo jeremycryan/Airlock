@@ -8,26 +8,31 @@ import card_list
 import mission_list
 import character_list
 
+DECK_FILE = "expansion_cards"
+CHAOS = False
+
 class Game(object):
     """ Airlock game object """
 
     def __init__(self):
-        self.missions = ["Saboteur","Crew","Crew","Crew","Chancellor","Accomplice"]
-        self.characters = ["Doctor","Doctor","Doctor","Doctor","Doctor","Doctor"]
         self.players = []
 
     def main(self):
         """ Plays the game """
 
-        self.setup()
+        if not self.load_settings(DECK_FILE):
+            self.load_settings("base_cards") # Default option
+        self.setup(CHAOS)
         while not self.reset:
             self.take_turn()
 
     def setup(self, chaos=False):
         """ Deals out roles, hands, and missions """
+        for player in self.players:
+            player.reset()
         self.msg_index = 0
         self.create_oxygen()
-        self.create_decks(True)
+        self.create_decks()
         self.reset = False
         random.shuffle(self.players)
         self.live_players = self.players[:]
@@ -62,23 +67,47 @@ class Game(object):
 
         self.players.append(Player(self, name))
 
-    def create_decks(self, expansion = True):
+    def load_settings(self, file_name):
+        """ Initializes deck from a text file """
+        try:
+            with open("%s.txt" % file_name, 'r') as file:
+                self.missions = []
+                self.characters = []
+                self.cell_types = []
+                self.cards = []
+                text = file.read().split("\n")
+                for line in text:
+                    line = line.replace(" ","")
+                    (key, value) = line.split(":")
+                    args = value.split(",")
+                    if key == "Oxygen":
+                        self.cell_types += [arg[0] for arg in args]
+                    elif key == "Missions":
+                        self.missions += args
+                    elif key == "Characters":
+                        self.characters += args
+                    else:
+                        self.cards += [key for i in range(int(args[0]))]
+        except:
+            print("Could not read file: %s" % file_name)
+            return False
+        return True
+
+    def create_decks(self):
         """ Creates the deck objects. """
 
-        self.deck = Deck(self, "Deck", expansion, True)
+        self.deck = Deck(self, "Deck", True)
         self.discard = Deck(self, "Discard")
         self.command_pile = Deck(self, "CommandPile")
         self.to_discard = Deck(self, "ToDiscard") # Cards to be discarded
         self.stage = Deck(self, "Stage") # Cards to be played
         self.global_permanents = Deck(self, "GlobalPermanents") # Includes cards like contaminate
 
-
     def create_oxygen(self):
         """ Creates the oxygen cells. """
 
-        self.oxygen = 6
-        self.cell_types = ['r','r','b','b','b','b']
-        self.force_red = False
+        self.oxygen = len(self.cell_types)
+        self.force_red = 0
         self.safe_next_turn = False
         self.oxygen_protected = False
 
@@ -88,9 +117,15 @@ class Game(object):
         self.oxygen -= 1
         print("Oxygen cell destroyed: %s cells remaining." % self.oxygen)
         self.publish(self.players, "oxygen", self.oxygen)
-        if self.oxygen <= 0:
-            self.end_game(False)
-            # TODO: Check for martyr
+        if self.oxygen == 1:
+            if self.check_martyr(False):
+                self.damage_oxygen()
+                return
+        if self.oxygen == 0:
+            if self.check_martyr(True):
+                self.repair_oxygen()
+            else:
+                self.end_game(False)
 
     def repair_oxygen(self):
         """ Adds one to the oxygen supply. """
@@ -98,11 +133,17 @@ class Game(object):
         self.oxygen += 1
         print("Oxygen cell restored: %s cells remaining." % self.oxygen)
         self.publish(self.players, "oxygen", self.oxygen)
+        if self.oxygen == 1:
+            if self.check_martyr(False):
+                self.damage_oxygen()
+                return
 
     def is_red_alert(self):
         """ Returns True if the current oxygen cell is a red alert cell """
+        if self.force_red:
+            return self.force_red > 0
 
-        return self.cell_types[self.oxygen-1] == 'r' or self.force_red
+        return self.cell_types[max(0,self.oxygen-1)].lower() == 'r'
 
     def take_turn(self):
         """ Carries out a single turn """
@@ -123,7 +164,8 @@ class Game(object):
         # Play cards into command pile
         self.request_card(player)
         allies = self.live_players[:]
-        allies.remove(player)
+        if player in allies:
+            allies.remove(player)
         if player.next_ally:
             if player.next_ally.hand.size() and player.next_ally in self.live_players:
                 allies = [player.next_ally]
@@ -140,15 +182,22 @@ class Game(object):
         # Play cards from command pile
         self.draw_card(self.command_pile, self.stage, 3 if self.is_red_alert() else 2)
         self.draw_card(self.command_pile, self.to_discard, self.command_pile.size()-1)
-        #TODO nullify
         while self.stage.size():
-            card = player.prompt(self.stage.to_list(),
+            options = self.stage.to_list()
+            max_priority = max([card.priority for card in options])
+            for card in options[:]:
+                if card.priority < max_priority:
+                    options.remove(card)
+            card = player.prompt(options,
                           prompt_string = "Choose first card to activate: ")
             print("Playing " + card.name)
             self.publish(self.players, "play", card)
             card.play()
+            if self.reset:
+                return
 
         # Use abilities and patch malfunctions
+        self.force_red = 0
         if not spent and player in self.live_players:
             self.main_phase(player)
 
@@ -167,7 +216,7 @@ class Game(object):
             self.end_game(True)
 
         #   Go to the next player
-        self.next_player()
+        self.active_player = self.next_player(True)
 
     def main_phase(self, player):
         """ Gives player an opportunity to use energy """
@@ -179,18 +228,17 @@ class Game(object):
         if player.health < 2:
             abilities = []
         malfunctions = self.find_all_malfunctions()
-        # TODO: Malfunctions repr should include player name
         abstain = ["Pass"]
         choice = player.prompt(abilities+malfunctions+abstain,
                                prompt_string = "How do you wish to use your energy? ")
         if choice in malfunctions:
-            player.permanents.find("Energy").destroy()
-            choice.patch()
-            if choice in self.global_permanents:
+            player.permanents.find("Energy", replace = True)[0].destroy()
+            if choice in self.global_permanents.to_list():
                 pile = self.global_permanents
             else:
                 pile = self.get_player(choice).permanents
-            self.game.publish(self.players, "ability", "patch", pile, choice)
+            choice.patch()
+            self.publish(self.players, "ability", "patch", pile, choice)
         elif choice in abilities:
             player.character.use_ability(choice)
         return choice != abstain[0]
@@ -230,7 +278,7 @@ class Game(object):
         
         return [self.move_card(card, deck1, deck2) for card in deck1.draw(num, True)]
 
-    def next_player(self):
+    def next_player(self, skips = False):
         """ Make it the next player's turn. """
 
         # Change players
@@ -238,11 +286,14 @@ class Game(object):
         for j in range(1,len(self.players)):
             successor = self.players[(i+j)%len(self.players)]
             if successor in self.live_players:
-                if successor.skipped:
-                    successor.skipped = False
+                if skips:
+                    if successor.skipped:
+                        successor.skipped = False
+                    else:
+                        return successor
                 else:
-                    self.active_player = successor
-                    break
+                    return successor
+        return self.active_player
 
     def request_card(self, player):
         """ Prompts target player to play a card into the command pile """
@@ -278,7 +329,6 @@ class Game(object):
 
     def get_player(self, card):
         """ Determines which player a card belongs to """
-
         for player in self.players:
             if card in player.permanents.to_list() + player.hand.to_list():
                 return player
@@ -315,9 +365,27 @@ class Game(object):
         return malfunctions
 
 
+    def check_martyr(self, crew = True):
+        """ Determines if martyr exists, and acts accordingly """
+        for player in self.live_players:
+            for card in player.hand.to_list():
+                if card.name == "Martyr":
+                    if player.mission.is_red != crew:
+                        self.move_card(card, player.hand, self.stage)
+                        card.play()
+                        if crew:
+                            self.kill(player)
+                            print("%s died to save the last oxygen cell" % player)
+                        else:
+                            print("%s died to destroy the last oxyge cell" % player)
+                        return True
+        return False
+
+        
     def end_game(self, crew_won):
         """ Handle end of game cleanup """
-
+        if self.reset:
+            return # Too late!
         if crew_won:
             print("The crew was victorious!")
             self.publish(self.players, "win", "blue")
@@ -343,4 +411,5 @@ if __name__ == '__main__':
     game.add_player('Paul')
     game.add_player('Daniel')
     game.add_player('Jeremy')
-    game.main()
+    while 1:
+        game.main()

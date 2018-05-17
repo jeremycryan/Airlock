@@ -10,44 +10,21 @@ from card import Card
 class Deck(object):
     """   A deck of airlock cards """
 
-    def __init__(self, game, name="temp", expansion = True, is_main_deck = False):
+    def __init__(self, game, name = "temp", is_main_deck = False):
         self.game = game
         self.cards = []
         self.name = name
         if is_main_deck:
-            self.populate(expansion)
+            self.populate()
 
     def __repr__(self):
         return self.name
 
-    def populate(self, expansion = True):
+    def populate(self):
         """ Adds the default deck. """
 
-        #   Populates the deck
-        self.create('Energy', 13)
-        self.create('Impact', 7)
-        self.create('Rupture', 5)
-        self.create('Aftershock', 3)
-        self.create('Salvage', 2)
-        self.create('Safeguard', 2)
-        self.create('HullBreach', 3)
-        self.create('Recycle', 3)
-        self.create('Airlock', 1)
-        self.create('Martyr', 1)
-        self.create('Override', 3)
-        self.create('Overrule', 3)
-        self.create('Discharge', 3)
-        self.create('Wormhole', 2)
-
-        #   Add expansion cards if expansion is enabled
-        if expansion:
-            self.create('EngineFailure', 2)
-            self.create('Nullify', 3)
-            self.create('Inflict', 2)
-            self.create('Repair', 2)
-            self.create('Contaminate', 2)
-            self.create('Execute', 1)
-            self.create('Shift', 3)
+        for card in self.game.cards:
+            self.create(card)
         self.shuffle()
 
     def create(self, name, num=1):

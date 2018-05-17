@@ -6,6 +6,7 @@ class Card(object):
     def __init__(self, game, name = 'Energy'):
         self.game = game
         self.name = name
+        self.priority = 0
         self.hidden = True
         self.priority = 0
 
@@ -45,12 +46,11 @@ class Mission(Card):
             else:
                 self.game.end_game(False)
 
-
 class Character(Card):
     """ Represents a player's Character card """
 
-    def __init__(self, game):
-        Card.__init__(self, game, "Grunt")
+    def __init__(self, game, name):
+        Card.__init__(self, game, name)
         self.abilities = {"Refresh":1}
 
     def on_vote(self, player):
@@ -60,10 +60,10 @@ class Character(Card):
     def use_ability(self, ability):
         """ Attempt to use a given ability """
         if ability in self.abilities:
-            getattr(self, ability.replace(" ","_").lower())()
             for energy in self.game.get_player(self).permanents.find(
-                "Energy", True, self.abilities[ability]):
+                "Energy", self.abilities[ability], True):
                 energy.destroy()
+            getattr(self, ability.replace(" ","_").lower())()
 
     def refresh(self):
         self.game.active_player.discard()

@@ -111,8 +111,11 @@ class Aftershock(Card):
     def play(self):
         """ Method that occurs on play """
 
-        #   Choose to damage character or oxygen supply
+        #   Damage ship
         self.hidden = False
+        if not self.game.oxygen_protected:
+            self.game.damage_oxygen()
+        #   Choose to damage character or oxygen supply
         if self.game.active_player in self.game.live_players:
             choice = self.game.active_player.prompt(['Damage self',
                 'Return %s to command pile' % self.name],
@@ -146,6 +149,12 @@ class HullBreach(Card):
         self.is_malfunction = True
         Card.__init__(self, game, name)
         self.patched = 0
+
+    def __repr__(self):
+        for player in self.game.live_players:
+            if self in player.permanents.to_list():
+                return "%s's %s" % (player, self.name)
+        return self.name
 
     def play(self):
         """ Method that occurs on play """
@@ -261,10 +270,12 @@ class Override(Card):
 
         #   Automatically play the top card of the deck
         self.hidden = False
-        new_card = self.game.draw_card(self.game.deck, self.game.stage)[0]
-        print("Playing " + new_card.name)
-        self.game.publish(self.game.players, "play", new_card)
-        new_card.play()
+        new_card = self.game.draw_card(self.game.deck, self.game.stage)
+        if len(new_card):
+            new_card = new_card[0]
+            print("Playing " + new_card.name)
+            self.game.publish(self.game.players, "play", new_card)
+            new_card.play()
         self.resolve()
 
 
@@ -299,7 +310,7 @@ class Wormhole(Card):
 
         #   Discard a card at random
         wormed.shuffle()
-        self.game.move_card(wormed, self.game.to_discard)
+        self.game.draw_card(wormed, self.game.to_discard)
 
         #   Add wormhole cards to the stage
         cards = wormed.cards[:]
@@ -309,7 +320,7 @@ class Wormhole(Card):
         while len(cards) > 0:
             to_play = self.game.active_player.prompt(cards,
                 prompt_string = "Choose a card to resolve. ")
-            wormed.remove(to_play)
+            cards.remove(to_play)
 
             #   Play the card only if it is red
             if to_play.color == 'red':
@@ -330,18 +341,11 @@ class Discharge(Card):
     def play(self):
         """ Method that occurs on play """
         self.hidden = False
-
-        #   Remove all energy from play that doesn't belong to active player
-        while self.game.find_permanent_card('Energy',
-            excluded_player = self.game.active_player):
-
-            #   TODO Find a more efficient way to find and kill energy that
-            #   doesn't involve looping through all permenents three times
-            #   per iteration
-            found_energy = self.game.find_permanent_card('Energy',
-                excluded_player = self.game.active_player)
-            found_energy.destroy()
-
+        current_player = self.game.active_player
+        for player in self.game.live_players:
+            if not player is current_player:
+                for card in player.permanents.find('Energy', -1, True):
+                    card.destroy()
         self.resolve()
 
 
@@ -420,8 +424,11 @@ class Overrule(Card):
         self.resolve()
 
         #   Play the selected card
-        self.game.publish(self.game.players, "play", choice)
-        choice.play()
+        if choice:
+            self.game.publish(self.game.players, "play", choice)
+            choice.play()
+
+        # TODO: still play card from hand even if player has died
 
 
 class EngineFailure(Card):
@@ -525,7 +532,10 @@ class Airlock(Card):
 
         #   Shuffle the player list to start with the active player
         player_list = self.game.live_players[:]
-        pos = player_list.index(self.game.active_player)
+        if self.game.active_player in player_list:
+            pos = player_list.index(self.game.active_player)
+        else:
+            pos = player_list.index(self.game.next_player())
         player_list = player_list[pos:] + player_list[:pos]
 
         #   Everybody cast your votes!
@@ -566,7 +576,10 @@ class Execute(Card):
 
         #   Shuffle the player list to start with the active player
         player_list = self.game.live_players[:]
-        pos = player_list.index(self.game.active_player)
+        if self.game.active_player in player_list:
+            pos = player_list.index(self.game.active_player)
+        else:
+            pos = player_list.index(self.game.next_player())
         player_list = player_list[pos:] + player_list[:pos]
 
         #   Nominate a player
@@ -592,3 +605,57 @@ class Execute(Card):
             print("%s has been killed." % nominee)
 
         self.resolve()
+        
+class Shift(Card):
+
+    def __init__(self, game):
+        name = 'Shift'
+        self.color = 'blue'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+        player = self.game.active_player
+        if player.health == 2:
+            options = list(player.character.abilities.keys())
+            choice = player.prompt(options,
+                                   prompt_string = "Choose an ability to activate. ")
+            player.character.use_ability(choice)
+        self.resolve()
+
+class Martyr(Card):
+
+    def __init__(self, game):
+        name = 'Martyr'
+        self.color = 'green'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+        self.resolve()
+
+class Nullify(Card):
+
+    def __init__(self, game):
+        name = 'Nullify'
+        self.color = 'blue'
+        self.is_malfunction = False
+        Card.__init__(self, game, name)
+        self.priority = 1
+
+    def play(self):
+        """ Method that occurs on play """
+        self.hidden = False
+        cards = self.game.stage.to_list()
+        cards.remove(self)
+        if len(cards):
+            player = self.game.active_player
+            target = player.prompt(cards,
+                                   prompt_string = "Choose a card to nullify. ")
+            self.game.move_card(target, self.game.stage, self.game.to_discard)
+        self.resolve()
+
