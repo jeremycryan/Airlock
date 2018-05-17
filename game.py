@@ -8,18 +8,21 @@ import card_list
 import mission_list
 import character_list
 
+DECK_FILE = "expansion_cards"
+CHAOS = False
+
 class Game(object):
     """ Airlock game object """
 
     def __init__(self):
-        self.missions = ["Saboteur","Crew","Crew","Crew","Chancellor","Accomplice"]
-        self.characters = ["Doctor","Captain","Navigator","Engineer","WeaponsExpert","Researcher"]
         self.players = []
 
     def main(self):
         """ Plays the game """
 
-        self.setup()
+        if not self.load_settings(DECK_FILE):
+            self.load_settings("base_cards") # Backup deck
+        self.setup(CHAOS)
         while not self.reset:
             self.take_turn()
 
@@ -27,7 +30,7 @@ class Game(object):
         """ Deals out roles, hands, and missions """
         self.msg_index = 0
         self.create_oxygen()
-        self.create_decks(True)
+        self.create_decks()
         self.reset = False
         random.shuffle(self.players)
         self.live_players = self.players[:]
@@ -62,22 +65,46 @@ class Game(object):
 
         self.players.append(Player(self, name))
 
-    def create_decks(self, expansion = True):
+    def load_settings(self, file_name):
+        """ Initializes deck from a text file """
+        try:
+            with open("%s.txt" % file_name, 'r') as file:
+                self.missions = []
+                self.characters = []
+                self.cell_types = []
+                self.cards = []
+                text = file.read().split("\n")
+                for line in text:
+                    line = line.replace(" ","")
+                    (key, value) = line.split(":")
+                    args = value.split(",")
+                    if key == "Oxygen":
+                        self.cell_types += [arg[0] for arg in args]
+                    elif key == "Missions":
+                        self.missions += args
+                    elif key == "Characters":
+                        self.characters += args
+                    else:
+                        self.cards += [key for i in range(int(args[0]))]
+        except:
+            print("Could not read file: %s" % file_name)
+            return False
+        return True
+
+    def create_decks(self):
         """ Creates the deck objects. """
 
-        self.deck = Deck(self, "Deck", expansion, True)
+        self.deck = Deck(self, "Deck", True)
         self.discard = Deck(self, "Discard")
         self.command_pile = Deck(self, "CommandPile")
         self.to_discard = Deck(self, "ToDiscard") # Cards to be discarded
         self.stage = Deck(self, "Stage") # Cards to be played
         self.global_permanents = Deck(self, "GlobalPermanents") # Includes cards like contaminate
 
-
     def create_oxygen(self):
         """ Creates the oxygen cells. """
 
-        self.oxygen = 6
-        self.cell_types = ['r','r','b','b','b','b']
+        self.oxygen = len(self.cell_types)
         self.force_red = False
         self.safe_next_turn = False
         self.oxygen_protected = False
@@ -102,7 +129,7 @@ class Game(object):
     def is_red_alert(self):
         """ Returns True if the current oxygen cell is a red alert cell """
 
-        return self.cell_types[self.oxygen-1] == 'r' or self.force_red
+        return self.cell_types[self.oxygen-1].lower() == 'r' or self.force_red
 
     def take_turn(self):
         """ Carries out a single turn """
