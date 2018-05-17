@@ -9,6 +9,8 @@ import pygame
 #   Python libraries
 from math import sqrt
 
+known_images = {}
+
 class CardRender(object):
     """ Class for rendering individual cards. """
 
@@ -18,6 +20,11 @@ class CardRender(object):
         self.screen = screen
         self.scale = scale
 
+        #   Alpha settings
+        self.alpha = 255
+        self.target_alpha = 255
+        self.fade_rate = 255
+
         #   There may be some case where these are separate
         self.target_pos = pos
         self.render_pos = pos
@@ -26,11 +33,22 @@ class CardRender(object):
         #   Movement parameters
         self.max_speed = 1500    #   Pixels (?) per second
         self.prop_accel = 3   #   Proportion of distance to target per second
+        self.threshold = 2  #   Pixels away for "close enough"
 
         #   Generate image/surface
         self.name = name
         self.card_size = (int(CARD_WIDTH * scale), int(CARD_HEIGHT * scale))
         self.path = "%s.png" % name.lower()
+        if known_images.get(self.path, 0):
+            self.surface = known_images[self.path]
+        else:
+            self.surface = self.generate_surface(self.path)
+        known_images[self.path] = self.surface
+
+    def transform(self, new_name):
+        """ Changes into a different card graphically. """
+        self.name = new_name
+        self.path = "%s.png" % new_name.lower()
         self.surface = self.generate_surface(self.path)
 
     def set_scale(self, new_scale):
@@ -66,7 +84,7 @@ class CardRender(object):
         #   Load image from path
 
         try:
-            card_image = pygame.image.load(sp(image_path))
+            card_image = pygame.image.load(sp(image_path)).convert()
             card_image = pygame.transform.scale(card_image, self.card_size)
             return card_image
 
@@ -135,21 +153,40 @@ class CardRender(object):
         dy = self.target_pos[1] - self.render_pos[1]
         dist = self.to_go()
 
-        #   Calculate direction and speed
-        if abs(dist) > 0:
-            direc = (dx/dist, dy/dist)
-        else:
-            direc = (1, 0)
-        speed = min(self.max_speed, dist*self.prop_accel)
-        new_dx = direc[0] * speed
-        new_dy = direc[1] * speed
+        #   Only move if the card is farther than the acceptable amount away.
+        if dist > self.threshold:
 
-        #   Change render position
-        self.move_render(new_dx * dt, new_dy * dt)
+            #   Calculate direction and speed
+            if abs(dist) > 0:
+                direc = (dx/dist, dy/dist)
+            else:
+                direc = (1, 0)
+            speed = min(self.max_speed, dist*self.prop_accel)
+            new_dx = direc[0] * speed
+            new_dy = direc[1] * speed
+
+            #   Update alpha value
+            if self.target_alpha < self.alpha:
+                self.alpha -= dt*self.fade_rate
+            elif self.target_alpha > self.alpha:
+                self.alpha += dt*self.fade_rate
+
+            #   Change render position
+            self.move_render(new_dx * dt, new_dy * dt)
+
+    def set_alpha(self, alpha, hard = False):
+        """ Sets the target alpha value for fades. Hard makes the transition
+        instantaneous. """
+
+        self.target_alpha = alpha
+
+        if hard:
+            self.alpha = alpha
 
     def draw(self):
         """ Draws the card on the screen based on its render position. """
 
+        self.surface.set_alpha(self.alpha)
         self.screen.blit(self.surface, self.render_pos)
 
     def destroy_me(self):
@@ -168,10 +205,10 @@ class CardRender(object):
         dist = (dx**2 + dy**2)**0.5
         return dist
 
-    def send_pos(self):
+    def send_pos(self, card = None):
         """ Position other cards should be thrown from. """
         return self.render_pos
 
-    def receive_pos(self):
+    def receive_pos(self, card = None):
         """ Position other cards should be thrown to """
         return self.target_pos

@@ -40,8 +40,8 @@ class OxygenCells(object):
             ypos = 0
 
             #   Separate surfaces for damaged and rendered oxygen cells.
-            damaged = CardRender("Damaged", self.oxygen_surface, (xpos, ypos))
-            render = CardRender(item, self.oxygen_surface, (xpos, ypos))
+            damaged = CardRender("Damaged", self.oxygen_surface, pos=(xpos, ypos))
+            render = CardRender(item, self.oxygen_surface, pos=(xpos, ypos))
             self.damaged_oxygen_cards.append(damaged)
             self.oxygen_cards.append(render)
 

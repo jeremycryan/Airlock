@@ -3,6 +3,7 @@
 from constants import *
 from card_render import CardRender
 from deck_render import DeckRender
+from card_array import CardArray
 from oxygen_cells import OxygenCells
 from player_summary import PlayerSummary
 
@@ -32,6 +33,8 @@ class Client(object):
         #   Actual screen
         self.screen_commit = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
         pygame.display.set_caption("Project Airlock")
+        self.last_fps_blit = 0
+        self.fps = 0
 
         self.cards = []
         self.decks = []
@@ -82,10 +85,15 @@ class Client(object):
         """ Makes a card that jumps around the screen a bit. """
 
         a = CardRender("Aftershock", self.screen)
-        d = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 10)
+        deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 20)
+        discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
         self.cards.append(a)
-        self.decks.append(d)
+        self.decks.append(deck)
+        self.decks.append(discard)
         self.generate_oxygen('bbbbrr', self.screen)
+
+        stage = CardArray(STAGE_POS)
+        hand = CardArray(HAND_POS, hand = True)
 
         p1 = PlayerSummary("Paul", self.screen, pos = 1)
         p2 = PlayerSummary("Jeremy", self.screen, pos = 2)
@@ -94,8 +102,10 @@ class Client(object):
         p5 = PlayerSummary("Nick", self.screen, pos = 5)
         p6 = PlayerSummary("Ray", self.screen, pos = 6)
 
-        up = time.time()
+        up = 0
         since_last = 0
+
+        thing_list = ["Aftershock"] * 10
 
         while True:
             nup = time.time()
@@ -110,17 +120,21 @@ class Client(object):
             self.update_card_movement(dt)
             self.draw_cards()
 
+            self.draw_fps(dt)
             self.update_screen(dt)
 
             new = time.time()
             if since_last > 2:
-                self.move_card(a, d, name = "Mission", destroy_on_destination = 1)
-                print("FPS: %s" % int(1/dt))
-                self.destroy_oxygen()
-                d.remove_card(2)
+                if len(hand.cards) > 2:
+                    self.move_card(hand, stage, card = hand.cards[0], name = hand.cards[0].name)
+                #self.move_card(deck, discard, name = "Discard")
+                self.move_card(deck, hand, name = thing_list.pop())
+                #self.destroy_oxygen()
                 since_last = 0
-                a.move_to((random.randrange(0, WINDOW_WIDTH),
-                    random.randrange(0, WINDOW_HEIGHT)))
+                if len(hand.cards) < 3:
+                    since_last += 1.5
+                #a.move_to((random.randrange(0, WINDOW_WIDTH),
+                #    random.randrange(0, WINDOW_HEIGHT)))
 
     def destroy_oxygen(self):
         """ Destroys an oxygen cell and applies a camera shake. """
@@ -130,7 +144,6 @@ class Client(object):
         #   Shake camera if animations are enabled
         if self.anim:
             self.shake_amp = 50
-
 
     def update_screen(self, dt):
         """ Draws the screen onto the other screen then does the thing. """
@@ -169,12 +182,45 @@ class Client(object):
         name = "_DeckBack", destroy_on_destination = False):
         """ Renders a card moving from one deck to another. """
 
-        if card == None:
-            card = CardRender(name, self.screen, pos = origin.send_pos())
-            self.cards.append(card)
+        #   These methods are relevant if the objects are decks.
+        num = origin.remove_card(1, obj = card)
+        destination.add_card(num)
 
-        card.move_to(destination.receive_pos())
-        card.destroy_on_destination = destroy_on_destination
+        if num:
+            if card == None:
+                card = CardRender(name, self.screen, pos = origin.send_pos(card))
+                self.cards.append(card)
+            else:
+                origin.send_pos(card)
+            card.transform(name)
+            card.move_to(destination.receive_pos(card))
+            card.destroy_on_destination = destroy_on_destination
+
+    def interpret_msg(self, msg):
+        """ Does whatever the message says. """
+
+        split = msg.split(":")
+
+        if split[1] == "move":
+            params = split[2].split(",")
+            origin = params[0]
+            destination = params[1]
+            if len(params) > 2:
+                card = params[2]
+            else:
+                card = "Unknown"
+
+    def draw_fps(self, dt):
+        """ Draws the frames per second on the screen. """
+
+        t = time.time()
+        if t - self.last_fps_blit > 0.1:
+            self.fps = int(0.2*1/dt + 0.8*self.fps)
+            self.last_fps_blit = time.time()
+        color = (255, 255, 255)
+        font = pygame.font.SysFont(PLAYERFONT, 25)
+        string = font.render("FPS: %s" % self.fps, 1, color)
+        self.ui.blit(string, (20, 20))
 
 
 if __name__ == '__main__':

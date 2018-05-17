@@ -50,7 +50,7 @@ class DeckRender(CardRender):
         #   Blit to screen
         self.screen.blit(card_img, self.render_pos)
 
-    def remove_card(self, n=1):
+    def remove_card(self, n=1, obj = None):
         """ Removes a number of cards from the deck. """
 
         self.deck_size -= n
@@ -62,3 +62,8 @@ class DeckRender(CardRender):
             self.deck_size = 0
 
         return successfully_drawn
+
+    def add_card(self, n=1, obj = None):
+        """ Adds a card to the pile. """
+
+        self.deck_size += n

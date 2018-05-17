@@ -62,11 +62,14 @@ PLAYER_POSITIONS = {1: (PR_LX, PR_TY),
     5: (PR_RX - PLAYER_WIDTH, PR_MY - int(PLAYER_HEIGHT/2)),
     6: (PR_RX - PLAYER_WIDTH, PR_BY - PLAYER_HEIGHT)}
 
+#   Player name positions
+PLAYER_NAME_POS = (0, 0)
+
 ################## OXYGEN OBJECT SETTINGS #############################
 
 #   Position of the center of the oxygen cells on the screen
 OXYGEN_POS = (PLAYER_REGION_X + MID_X,
-    PLAYER_REGION_Y + MID_Y)
+    PLAYER_REGION_Y + MID_Y - 100)
 OXYGEN_SPACING = 20
 
 ################# PILE LAYOUT #########################################
@@ -76,6 +79,8 @@ PILE_OFFSET = 30
 PILE_02_OFFSET = 30
 DRAW_PILE_POS = (int(PR_MX + PILE_OFFSET/2),
     int(OXYGEN_POS[1] - CARD_HEIGHT * 1.5 - PILE_02_OFFSET))
+DISCARD_PILE_POS = (int(PR_MX - PILE_OFFSET/2 - CARD_WIDTH),
+    int(OXYGEN_POS[1] - CARD_HEIGHT * 1.5 - PILE_02_OFFSET))
 
 ################# SIDEBAR SETTINGS ####################################
 
@@ -83,7 +88,22 @@ SIDEBAR_WIDTH = WINDOW_WIDTH * 0.25
 SIDEBAR_X_MARG = 20
 SIDEBAR_Y_MARG = 50
 
+################# CARD ARRAY SETTINGS #################################
+
+ARRAY_SPACING = 20
+
+################# HAND SETTINGS #######################################
+
+HAND_SCALE = 1.0
+HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
+
+################# STAGE SETTINGS ######################################
+
+STAGE_VERT_OFFSET = 30
+STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
+
 ################# FONTS ###############################################
 
 CARDFONT = "None"
 DECKFONT = "None"
+PLAYERFONT = "None"
