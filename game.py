@@ -13,7 +13,7 @@ class Game(object):
 
     def __init__(self):
         self.missions = ["Saboteur","Crew","Crew","Crew","Chancellor","Accomplice"]
-        self.characters = ["Doctor","Doctor","Doctor","Doctor","Doctor","Doctor"]
+        self.characters = ["Doctor","Captain","Navigator","Engineer","WeaponsExpert","Researcher"]
         self.players = []
 
     def main(self):
@@ -184,7 +184,7 @@ class Game(object):
         choice = player.prompt(abilities+malfunctions+abstain,
                                prompt_string = "How do you wish to use your energy? ")
         if choice in malfunctions:
-            player.permanents.find("Energy").destroy()
+            player.permanents.find("Energy")[0].destroy()
             choice.patch()
             if choice in self.global_permanents:
                 pile = self.global_permanents

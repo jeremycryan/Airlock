@@ -48,8 +48,8 @@ class Mission(Card):
 class Character(Card):
     """ Represents a player's Character card """
 
-    def __init__(self, game):
-        Card.__init__(self, game, "Grunt")
+    def __init__(self, game, name):
+        Card.__init__(self, game, name)
         self.abilities = {"Refresh":1}
 
     def on_vote(self, player):

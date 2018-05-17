@@ -287,7 +287,7 @@ class Wormhole(Card):
 
         #   Discard a card at random
         wormed.shuffle()
-        self.game.move_card(wormed, self.game.to_discard)
+        self.game.draw_card(wormed, self.game.to_discard)
 
         #   Add wormhole cards to the stage
         cards = wormed.cards[:]
@@ -297,7 +297,7 @@ class Wormhole(Card):
         while len(cards) > 0:
             to_play = self.game.active_player.prompt(cards,
                 prompt_string = "Choose a card to resolve. ")
-            wormed.remove(to_play)
+            cards.remove(to_play)
 
             #   Play the card only if it is red
             if to_play.color == 'red':
