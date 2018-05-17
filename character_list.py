@@ -96,8 +96,24 @@ class Researcher(Character):
                                prompt_string = "Who do you choose to investigate?")
         self.game.publish(self.game.players, "ability", "Investigate", target)
         target.hand.shuffle()
-        card = self.game.draw_card(target.hand, player.hand)[0]
-        replace = player.prompt(["Yes","No"],
-                                prompt_string = "Do you choose to return the card?")
-        if replace == "Yes":
-            self.game.move_card(card, player.hand, target.hand)
+        if target.hand.size():
+            card = self.game.draw_card(target.hand, player.hand)[0]
+            replace = player.prompt(["Yes","No"],
+                                    prompt_string = "Do you choose to return the card?")
+            if replace == "Yes":
+                self.game.move_card(card, player.hand, target.hand)
+
+class Quartermaster(Character):
+    def __init__(self, game):
+        Character.__init__(self, game, "Quartermaster")
+        self.abilities["Ration"] = 1
+
+    def ration(self):
+        player = self.game.get_player(self)
+        target = player.prompt(self.game.live_players[:],
+                               prompt_string = "Who do you choose to ration?")
+        self.game.publish(self.game.players, "ability", "ration", target)
+        if target.health > 1:
+            target.damage(1)
+        else:
+            target.damage(-1)

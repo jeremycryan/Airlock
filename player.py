@@ -5,6 +5,8 @@ import random
 
 from deck import Deck
 
+AUTO_PLAY = False
+
 class Player(object):
     """ Player object, in case you couldn't tell from the line above. """
 
@@ -24,13 +26,16 @@ class Player(object):
         return self.name
 
 
-    def damage(self):
+    def damage(self, num = 1):
         """ Take damage to the player. """
 
-        self.health -= 1
-        print("Ouch! %s is at %s health." % (self.name, self.health))
+        self.health -= num
+        if num > 0:
+            print("Ouch! %s is at %s health." % (self.name, self.health))
+        if num < 0:
+            print("%s has been restored to %s health." % (self.name, self.health))            
         self.game.publish(self.game.players, "damage", self, self.health)
-        if self.health < 1:
+        if self.health < 1 and self in self.game.live_players:
             self.game.kill(self)
 
 
@@ -70,8 +75,12 @@ class Player(object):
         """ Somehow prompts the player to make a choice between items in a list.
         This could be through text or in a GUI. """
 
-        #   TODO make this use a gui and generally be better
-
+        # Automatically choose at random to test for errors
+        if AUTO_PLAY:
+            if len(choices):
+                return random.choice(choices)
+            return choices
+        
         if len(choices) == 1:
             return choices[0]
         elif len(choices) == 0:
@@ -93,3 +102,6 @@ class Player(object):
             choice = input()
 
         return choices[choice_strings.index(choice)]
+
+    def reset(self):
+        Player.__init__(self, self.game, self.name)

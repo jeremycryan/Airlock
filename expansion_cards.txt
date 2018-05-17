@@ -1,6 +1,6 @@
 Oxygen: Red, Red, Blue, Blue, Blue, Blue
 Missions: Saboteur, Crew, Crew, Crew, Chancellor, Accomplice
-Characters: Doctor, Captain, Navigator, Engineer, WeaponsExpert, Researcher
+Characters: Doctor, Captain, Navigator, Engineer, Weapons Expert, Researcher
 Characters: AI, Stowaway, Quartermaster
 Energy: 13
 Impact: 7
@@ -8,7 +8,7 @@ Rupture: 5
 Aftershock: 3
 Salvage: 2
 Safeguard: 2
-Hull Breach: 20
+Hull Breach: 2
 Recycle: 3
 Airlock: 1
 Martyr: 1

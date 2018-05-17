@@ -21,13 +21,15 @@ class Game(object):
         """ Plays the game """
 
         if not self.load_settings(DECK_FILE):
-            self.load_settings("base_cards") # Backup deck
+            self.load_settings("base_cards") # Default option
         self.setup(CHAOS)
         while not self.reset:
             self.take_turn()
 
     def setup(self, chaos=False):
         """ Deals out roles, hands, and missions """
+        for player in self.players:
+            player.reset()
         self.msg_index = 0
         self.create_oxygen()
         self.create_decks()
@@ -150,7 +152,8 @@ class Game(object):
         # Play cards into command pile
         self.request_card(player)
         allies = self.live_players[:]
-        allies.remove(player)
+        if player in allies:
+            allies.remove(player)
         if player.next_ally:
             if player.next_ally.hand.size() and player.next_ally in self.live_players:
                 allies = [player.next_ally]
@@ -174,6 +177,8 @@ class Game(object):
             print("Playing " + card.name)
             self.publish(self.players, "play", card)
             card.play()
+            if self.reset:
+                return
 
         # Use abilities and patch malfunctions
         if not spent and player in self.live_players:
@@ -194,7 +199,7 @@ class Game(object):
             self.end_game(True)
 
         #   Go to the next player
-        self.next_player()
+        self.active_player = self.next_player(True)
 
     def main_phase(self, player):
         """ Gives player an opportunity to use energy """
@@ -256,7 +261,7 @@ class Game(object):
         
         return [self.move_card(card, deck1, deck2) for card in deck1.draw(num, True)]
 
-    def next_player(self):
+    def next_player(self, skips = False):
         """ Make it the next player's turn. """
 
         # Change players
@@ -264,11 +269,14 @@ class Game(object):
         for j in range(1,len(self.players)):
             successor = self.players[(i+j)%len(self.players)]
             if successor in self.live_players:
-                if successor.skipped:
-                    successor.skipped = False
+                if skips:
+                    if successor.skipped:
+                        successor.skipped = False
+                    else:
+                        return successor
                 else:
-                    self.active_player = successor
-                    break
+                    return successor
+        return self.active_player
 
     def request_card(self, player):
         """ Prompts target player to play a card into the command pile """
@@ -342,7 +350,8 @@ class Game(object):
 
     def end_game(self, crew_won):
         """ Handle end of game cleanup """
-
+        if self.reset:
+            return # Too late!
         if crew_won:
             print("The crew was victorious!")
             self.publish(self.players, "win", "blue")
@@ -368,4 +377,5 @@ if __name__ == '__main__':
     game.add_player('Paul')
     game.add_player('Daniel')
     game.add_player('Jeremy')
-    game.main()
+    while 1:
+        game.main()

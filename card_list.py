@@ -324,18 +324,11 @@ class Discharge(Card):
     def play(self):
         """ Method that occurs on play """
         self.hidden = False
-
-        #   Remove all energy from play that doesn't belong to active player
-        while self.game.find_permanent_card('Energy',
-            excluded_player = self.game.active_player):
-
-            #   TODO Find a more efficient way to find and kill energy that
-            #   doesn't involve looping through all permenents three times
-            #   per iteration
-            found_energy = self.game.find_permanent_card('Energy',
-                excluded_player = self.game.active_player)
-            found_energy.destroy()
-
+        current_player = self.game.active_player
+        for player in self.game.live_players:
+            if not player is current_player:
+                for card in player.permanents.find('Energy', -1, True):
+                    card.destroy()
         self.resolve()
 
 
@@ -414,8 +407,11 @@ class Overrule(Card):
         self.resolve()
 
         #   Play the selected card
-        self.game.publish(self.game.players, "play", choice)
-        choice.play()
+        if choice:
+            self.game.publish(self.game.players, "play", choice)
+            choice.play()
+
+        # TODO: still play card from hand even if player has died
 
 
 class EngineFailure(Card):
@@ -519,7 +515,10 @@ class Airlock(Card):
 
         #   Shuffle the player list to start with the active player
         player_list = self.game.live_players[:]
-        pos = player_list.index(self.game.active_player)
+        if self.game.active_player in player_list:
+            pos = player_list.index(self.game.active_player)
+        else:
+            pos = player_list.index(self.game.next_player())
         player_list = player_list[pos:] + player_list[:pos]
 
         #   Everybody cast your votes!
@@ -560,7 +559,10 @@ class Execute(Card):
 
         #   Shuffle the player list to start with the active player
         player_list = self.game.live_players[:]
-        pos = player_list.index(self.game.active_player)
+        if self.game.active_player in player_list:
+            pos = player_list.index(self.game.active_player)
+        else:
+            pos = player_list.index(self.game.next_player())
         player_list = player_list[pos:] + player_list[:pos]
 
         #   Nominate a player
