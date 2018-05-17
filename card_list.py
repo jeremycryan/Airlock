@@ -135,6 +135,12 @@ class HullBreach(Card):
         Card.__init__(self, game, name)
         self.patched = 0
 
+    def __repr__(self):
+        for player in self.game.live_players:
+            if self in player.permanents.to_list():
+                return "%s's %s" % (player, self.name)
+        return self.name
+
     def play(self):
         """ Method that occurs on play """
         self.hidden = False

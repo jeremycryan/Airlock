@@ -8,7 +8,7 @@ Rupture: 5
 Aftershock: 3
 Salvage: 2
 Safeguard: 2
-Hull Breach: 2
+Hull Breach: 20
 Recycle: 3
 Airlock: 1
 Martyr: 1

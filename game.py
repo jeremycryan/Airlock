@@ -206,18 +206,17 @@ class Game(object):
         if player.health < 2:
             abilities = []
         malfunctions = self.find_all_malfunctions()
-        # TODO: Malfunctions repr should include player name
         abstain = ["Pass"]
         choice = player.prompt(abilities+malfunctions+abstain,
                                prompt_string = "How do you wish to use your energy? ")
         if choice in malfunctions:
-            player.permanents.find("Energy")[0].destroy()
-            choice.patch()
-            if choice in self.global_permanents:
+            player.permanents.find("Energy", replace = True)[0].destroy()
+            if choice in self.global_permanents.to_list():
                 pile = self.global_permanents
             else:
                 pile = self.get_player(choice).permanents
-            self.game.publish(self.players, "ability", "patch", pile, choice)
+            choice.patch()
+            self.publish(self.players, "ability", "patch", pile, choice)
         elif choice in abilities:
             player.character.use_ability(choice)
         return choice != abstain[0]
@@ -305,7 +304,6 @@ class Game(object):
 
     def get_player(self, card):
         """ Determines which player a card belongs to """
-
         for player in self.players:
             if card in player.permanents.to_list() + player.hand.to_list():
                 return player
