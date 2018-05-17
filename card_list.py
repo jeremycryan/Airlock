@@ -34,7 +34,19 @@ class Rupture(Card):
             self.game.damage_oxygen()
 
         self.resolve()
-        
+
+    def resolve(self):
+        """ What happens after the card gets played """
+
+        #   Remove card from stage and add to discard
+        self.game.stage.remove(self)
+        self.game.to_discard.add(self)
+
+    def immune_to_cancel(self):
+        """ Determines whether the card effect can be prevented,
+        e.g. by nullify """
+
+        return self.game.is_red_alert()
 
 class Recycle(Card):
 
@@ -168,7 +180,7 @@ class HullBreach(Card):
 
         owner = self.game.get_player(self)
         self.game.move_card(self, owner.permanents, self.game.to_discard)
-        
+
     def patch(self):
         """ Patch the malfunction """
         self.patched += 1
@@ -200,7 +212,7 @@ class Energy(Card):
 
         owner = self.game.get_player(self)
         self.game.move_card(self, owner.permanents, self.game.to_discard)
-        
+
 
 class Safeguard(Card):
 

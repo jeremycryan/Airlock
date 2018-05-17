@@ -8,6 +8,7 @@ class Card(object):
         self.name = name
         self.priority = 0
         self.hidden = True
+        self.priority = 0
 
     def __repr__(self):
         return self.name
