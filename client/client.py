@@ -85,11 +85,11 @@ class Client(object):
         """ Makes a card that jumps around the screen a bit. """
 
         a = CardRender("Aftershock", self.screen)
-        deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 20)
-        discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
+        self.deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 20)
+        self.discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
         self.cards.append(a)
-        self.decks.append(deck)
-        self.decks.append(discard)
+        self.decks.append(self.deck)
+        self.decks.append(self.discard)
         self.generate_oxygen('bbbbrr', self.screen)
 
         self.stage = CardArray(STAGE_POS)
