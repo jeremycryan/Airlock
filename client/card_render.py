@@ -23,7 +23,8 @@ class CardRender(object):
         #   Alpha settings
         self.alpha = 255
         self.target_alpha = 255
-        self.fade_rate = 255
+        self.fade_rate = 155
+        self.smoothing = 150    #   255 is crisp and sharp, 0 is disgustingly smooth
 
         #   There may be some case where these are separate
         self.target_pos = pos
@@ -31,9 +32,9 @@ class CardRender(object):
         self.destroy_on_destination = False
 
         #   Movement parameters
-        self.max_speed = 1500    #   Pixels (?) per second
+        self.max_speed = 1200    #   Pixels (?) per second
         self.prop_accel = 3   #   Proportion of distance to target per second
-        self.threshold = 2  #   Pixels away for "close enough"
+        self.threshold = 1  #   Pixels away for "close enough"
 
         #   Generate image/surface
         self.name = name
@@ -50,6 +51,12 @@ class CardRender(object):
         self.name = new_name
         self.path = "%s.png" % new_name.lower()
         self.surface = self.generate_surface(self.path)
+
+        #   Load the image, only if it hasn't been loaded before.
+        if known_images.get(self.path, 0):
+            self.surface = known_images[self.path]
+        else:
+            self.surface = self.generate_surface(self.path)
 
     def set_scale(self, new_scale):
         """ Changes the scale of the card. """
@@ -101,9 +108,15 @@ class CardRender(object):
             return card_surface
 
     def generate_good_font(self, max_dims, text, font, margin = 5,
-        color = (0, 0, 0), min_size = 15, max_width = 999, max_height = 999):
+        color = (0, 0, 0), min_size = 15, max_width = 999, max_height = 999,
+        lock = False):
         """ Generates a pygame font object such that it fits within the
-        maximum dimensions. """
+        maximum dimensions.
+
+        min_size is the minimum font size allowed
+        margin is the number of pixels free of the sides and top the final
+            text must be
+        if lock is true, only size min_size will be tested."""
 
         size = min_size
         self.card_font = pygame.font.SysFont(font, size)
@@ -185,6 +198,9 @@ class CardRender(object):
 
     def draw(self):
         """ Draws the card on the screen based on its render position. """
+
+        #   Camera smoothing
+        self.screen.set_alpha(self.smoothing)
 
         self.surface.set_alpha(self.alpha)
         self.screen.blit(self.surface, self.render_pos)

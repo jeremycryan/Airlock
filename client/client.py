@@ -92,20 +92,22 @@ class Client(object):
         self.decks.append(discard)
         self.generate_oxygen('bbbbrr', self.screen)
 
-        stage = CardArray(STAGE_POS)
-        hand = CardArray(HAND_POS, hand = True)
+        self.stage = CardArray(STAGE_POS)
+        self.hand = CardArray(HAND_POS, hand = True)
 
         p1 = PlayerSummary("Paul", self.screen, pos = 1)
         p2 = PlayerSummary("Jeremy", self.screen, pos = 2)
         p3 = PlayerSummary("Daniel", self.screen, pos = 3)
         p4 = PlayerSummary("Adam", self.screen, pos = 4)
         p5 = PlayerSummary("Nick", self.screen, pos = 5)
-        p6 = PlayerSummary("Ray", self.screen, pos = 6)
+        p6 = PlayerSummary("Ray", self.screen, pos = 6, is_main_player = True)
+        self.players = [p1, p2, p3, p4, p5, p6]
+        self.generate_deck_dict()
 
         up = 0
         since_last = 0
 
-        thing_list = ["Aftershock"] * 10
+        thing_list = ["Aftershock", "Impact", "Mission", "Recycle", "Unknown"] * 30
 
         while True:
             nup = time.time()
@@ -114,7 +116,7 @@ class Client(object):
             since_last += dt
 
             self.clear_screen(troubleshoot = True)
-            for player in [p1, p2, p3, p4, p5, p6]:
+            for player in self.players:
                 player.draw()
             self.oxygen.draw()
             self.update_card_movement(dt)
@@ -125,15 +127,18 @@ class Client(object):
 
             new = time.time()
             if since_last > 2:
-                if len(hand.cards) > 2:
-                    self.move_card(hand, stage, card = hand.cards[0], name = hand.cards[0].name)
+                since_last -= 2
+                # if len(hand.cards) > 2:
+                    #self.move_card(hand, stage, card = hand.cards[0], name = hand.cards[0].name)
                 #self.move_card(deck, discard, name = "Discard")
-                self.move_card(deck, hand, name = thing_list.pop())
+
+                #self.move_card(deck, hand, name = thing_list.pop())
                 #self.destroy_oxygen()
-                since_last = 0
-                if len(hand.cards) < 3:
-                    since_last += 1.5
-                #a.move_to((random.randrange(0, WINDOW_WIDTH),
+                # if len(hand.cards) < 3:
+                #     since_last += 1.5
+                # else:
+                #     self.move_card(deck, p4.hand, name = "Aftershock", destroy_on_destination = True)
+                # a.move_to((random.randrange(0, WINDOW_WIDTH),
                 #    random.randrange(0, WINDOW_HEIGHT)))
 
     def destroy_oxygen(self):
@@ -168,12 +173,18 @@ class Client(object):
     def draw_troubleshoot(self):
         """ Draws regions for easier troubleshooting. """
 
+        #   Draws boxes around player regions
+        for player in self.players:
+            player.surf.fill((60, 20, 60))
+
         #   Draw player summary region boundaries
         region = pygame.Surface((PLAYER_REGION_WIDTH, PLAYER_REGION_HEIGHT))
         region.fill((40, 0, 40))
         xpos = int(MID_X - PLAYER_REGION_WIDTH/2) + PLAYER_REGION_X
         ypos = int(MID_Y - PLAYER_REGION_HEIGHT/2) + PLAYER_REGION_Y
         self.screen.blit(region, (xpos, ypos))
+
+        #   Fills player surfaces to distinguish from background
 
         #   Draw sidebar fill
         self.ui.fill((0, 40, 40))
@@ -196,6 +207,19 @@ class Client(object):
             card.move_to(destination.receive_pos(card))
             card.destroy_on_destination = destroy_on_destination
 
+    def generate_deck_dict(self):
+        """ Links the name of a hand to the actual hand object. """
+
+        self.deck_dict = {}
+
+        #   Add deck and discard
+        self.deck_dict["Deck"] = self.deck
+        self.deck_dict["Discard"] = self.discard
+
+        #   Add hands for players
+        for player in self.players:
+            self.deck_dict["%s Hand" % player.name] = player.hand
+
     def interpret_msg(self, msg):
         """ Does whatever the message says. """
 
@@ -208,7 +232,8 @@ class Client(object):
             if len(params) > 2:
                 card = params[2]
             else:
-                card = "Unknown"
+                card = "Deck"
+
 
     def draw_fps(self, dt):
         """ Draws the frames per second on the screen. """

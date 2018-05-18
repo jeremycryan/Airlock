@@ -63,20 +63,23 @@ PLAYER_POSITIONS = {1: (PR_LX, PR_TY),
     6: (PR_RX - PLAYER_WIDTH, PR_BY - PLAYER_HEIGHT)}
 
 #   Player name positions
-PLAYER_NAME_POS = (0, 0)
+PLAYER_NAME_POS = (0, 8)
+PLAYER_HAND_POS = (0, 0)
+PLAYER_HAND_SCALE = 0.7
+PLAYER_HAND_YOFF = 0
 
 ################## OXYGEN OBJECT SETTINGS #############################
 
 #   Position of the center of the oxygen cells on the screen
 OXYGEN_POS = (PLAYER_REGION_X + MID_X,
-    PLAYER_REGION_Y + MID_Y - 100)
-OXYGEN_SPACING = 20
+    PLAYER_REGION_Y + MID_Y - 240)
+OXYGEN_SPACING = 15
 
 ################# PILE LAYOUT #########################################
 
 #   Define position of draw and discard piles, relative to oxygen
-PILE_OFFSET = 30
-PILE_02_OFFSET = 30
+PILE_OFFSET = 340
+PILE_02_OFFSET = -CARD_HEIGHT
 DRAW_PILE_POS = (int(PR_MX + PILE_OFFSET/2),
     int(OXYGEN_POS[1] - CARD_HEIGHT * 1.5 - PILE_02_OFFSET))
 DISCARD_PILE_POS = (int(PR_MX - PILE_OFFSET/2 - CARD_WIDTH),
@@ -99,7 +102,7 @@ HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
 
 ################# STAGE SETTINGS ######################################
 
-STAGE_VERT_OFFSET = 30
+STAGE_VERT_OFFSET = 100
 STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
 
 ################# FONTS ###############################################
