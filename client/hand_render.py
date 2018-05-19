@@ -56,7 +56,7 @@ class HandRender(DeckRender):
     def send_pos(self, card = None):
         """ Position other cards should be thrown from. """
 
-        xpos = int(PLAYER_POSITIONS[self.player_num][0] - CARD_WIDTH*self.scale/2)
+        xpos = int(PLAYER_POSITIONS[self.player_num][0] - CARD_WIDTH*self.scale/4)
         ypos = int(PLAYER_POSITIONS[self.player_num][1] - CARD_HEIGHT*self.scale/4)
 
         return (xpos, ypos)
@@ -65,7 +65,8 @@ class HandRender(DeckRender):
         """ Position other cards should be thrown to. """
 
         if card:
-            card.set_alpha(0)
+            if not hasattr(card, "deck_size"):
+                card.set_alpha(0)
         #self.add_card(n=1, obj=card)
 
         return self.send_pos(card = card)

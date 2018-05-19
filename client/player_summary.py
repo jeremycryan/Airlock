@@ -39,7 +39,7 @@ class PlayerSummary(object):
         #   Make a hand as a face-down deck
         hand_name = "%s Hand" % self.name
         self.hand = HandRender(hand_name, self.surf, pos = PLAYER_HAND_POS,
-            deck_size = 2, owner = name, player_num = pos)
+            deck_size = 0, owner = name, player_num = pos)
 
         #   Create mission and character cards
         self.mission_card = CardRender(mission, self.surf,

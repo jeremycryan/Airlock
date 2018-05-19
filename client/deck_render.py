@@ -17,10 +17,13 @@ class DeckRender(CardRender):
 
 
         #   Call init for superclass
-        print(args, kwargs)
         CardRender.__init__(self, args[0], args[1], pos = kwargs["pos"])
 
         self.num, self.num_shadow = self.generate_numbers()
+        self.pile = True
+
+        #   Generates surface for deck name
+        self.name_surface = self.generate_name_surface()
 
     def generate_numbers(self):
         """ Generates the surfaces for deck count. """
@@ -57,7 +60,23 @@ class DeckRender(CardRender):
             ypos + DECK_YOFF + DECK_STAGGER))
 
         #   Blit to screen
+        #   BUG shouldn't have to set alpha here, but for some reason the deck
+        #   alpha changes when it sends cards to player hands.
+        card_img.set_alpha(255)
         self.screen.blit(card_img, self.render_pos)
+
+        ns_h = self.name_surface.get_height()
+        ns_w = self.name_surface.get_width()
+        self.screen.blit(self.name_surface,
+            (int(self.render_pos[0] - ns_w/2 + CARD_WIDTH/2),
+            int(self.render_pos[1] - ns_h/2 - 20)))
+
+    def generate_name_surface(self):
+        """ Generates a surface for the deck's name. """
+
+        font = DECKFONT
+        return self.generate_good_font(CARDSIZE, self.name, font,
+            color = (120, 90, 120), min_size = 30, lock = True)
 
     def remove_card(self, n=1, obj = None):
         """ Removes a number of cards from the deck. """
@@ -78,6 +97,5 @@ class DeckRender(CardRender):
     def add_card(self, n=1, obj = None):
         """ Adds a card to the pile. """
 
-        print("ADD %s" % n)
         self.deck_size += n
         self.num, self.num_shadow = self.generate_numbers()

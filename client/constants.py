@@ -43,7 +43,7 @@ MISS_Y = PLAYER_Y
 #   Maximum rectangle of user interface, including player summaries
 PLAYER_REGION_X = WINDOW_WIDTH * 0.125   #   offset from screen center
 PLAYER_REGION_Y = 0     #   offset from screen center
-PLAYER_REGION_HEIGHT = WINDOW_HEIGHT * 0.9
+PLAYER_REGION_HEIGHT = WINDOW_HEIGHT * 0.92
 PLAYER_REGION_WIDTH = WINDOW_WIDTH * 0.7
 
 #   Easier-to-work-with variables
@@ -55,9 +55,9 @@ PR_MX = PLAYER_REGION_X + MID_X
 PR_MY = PLAYER_REGION_Y + MID_Y
 
 #   Player default positions
-PLAYER_POSITIONS = {1: (PR_LX, PR_TY),
+PLAYER_POSITIONS = {3: (PR_LX, PR_TY),
     2: (PR_LX, PR_MY - int(PLAYER_HEIGHT/2)),
-    3: (PR_LX, PR_BY - PLAYER_HEIGHT),
+    1: (PR_LX, PR_BY - PLAYER_HEIGHT),
     4: (PR_RX - PLAYER_WIDTH, PR_TY),
     5: (PR_RX - PLAYER_WIDTH, PR_MY - int(PLAYER_HEIGHT/2)),
     6: (PR_RX - PLAYER_WIDTH, PR_BY - PLAYER_HEIGHT)}
@@ -91,6 +91,11 @@ SIDEBAR_WIDTH = WINDOW_WIDTH * 0.25
 SIDEBAR_X_MARG = 20
 SIDEBAR_Y_MARG = 50
 
+LOG_WIDTH = SIDEBAR_WIDTH * 0.88
+LOG_HEIGHT = WINDOW_HEIGHT * 0.4
+LOG_XPOS = SIDEBAR_WIDTH * 0.06
+LOG_YPOS = WINDOW_HEIGHT * 0.57
+
 ################# CARD ARRAY SETTINGS #################################
 
 ARRAY_SPACING = 20
@@ -110,3 +115,4 @@ STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
 CARDFONT = "None"
 DECKFONT = "None"
 PLAYERFONT = "None"
+LOGFONT = "None"

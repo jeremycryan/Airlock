@@ -16,6 +16,7 @@ class CardArray(object):
         self.pos = pos
         self.cards = []
         self.hand = hand
+        self.pile = False
 
         #   Maximum width of array object
         self.max_width = (CARD_WIDTH + ARRAY_SPACING) * 5
@@ -51,6 +52,15 @@ class CardArray(object):
         if self.hand:
             card.set_scale(1.0)
         return card.render_pos
+
+    def find_with_name(self, name):
+        """ Finds a card in the list with the given name. """
+
+        #   If looking for a card with the same name, substitute them.
+        for item in self.cards:
+            if item.name == name:
+                return item
+        return False
 
     def correct_positions(self):
         """ Corrects the positions of all cards in array. """

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from constants import *
+from log import Log
 from card_render import CardRender
 from deck_render import DeckRender
 from card_array import CardArray
@@ -77,6 +78,7 @@ class Client(object):
     def clear_screen(self, troubleshoot = False):
         """ Clears the screen to all black. """
         self.screen.fill((0, 0, 0))
+        self.ui.fill((0, 0, 0))
 
         if troubleshoot:
             self.draw_troubleshoot()
@@ -84,6 +86,7 @@ class Client(object):
     def demo_card(self):
         """ Makes a card that jumps around the screen a bit. """
 
+        self.log = Log(self.ui)
         a = CardRender("Aftershock", self.screen)
         self.deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 20)
         self.discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
@@ -109,6 +112,9 @@ class Client(object):
 
         thing_list = ["Aftershock", "Impact", "Mission", "Recycle", "Unknown"] * 30
 
+        send_froms = ["Deck", "Deck", "Ray Hand", "Ray Hand", "Deck"]*10
+        send_tos = ["Ray Hand", "Ray Hand", "Discard", "Stage", "Jeremy Hand"]*10
+
         while True:
             nup = time.time()
             dt = nup - up
@@ -123,11 +129,14 @@ class Client(object):
             self.draw_cards()
 
             self.draw_fps(dt)
+            self.log.draw()
             self.update_screen(dt)
 
             new = time.time()
             if since_last > 2:
-                since_last -= 2
+                self.interpret_msg("6:move:%s,%s,Aftershock" % (send_froms.pop(0), send_tos.pop(0)))
+                since_last = 0
+                #since_last -= 2
                 # if len(hand.cards) > 2:
                     #self.move_card(hand, stage, card = hand.cards[0], name = hand.cards[0].name)
                 #self.move_card(deck, discard, name = "Discard")
@@ -188,9 +197,12 @@ class Client(object):
 
         #   Draw sidebar fill
         self.ui.fill((0, 40, 40))
+        region = pygame.Surface((LOG_WIDTH, LOG_HEIGHT))
+        region.fill((0, 50, 50))
+        self.ui.blit(region, (LOG_XPOS, LOG_YPOS))
 
     def move_card(self, origin, destination, card = None,
-        name = "_DeckBack", destroy_on_destination = False):
+        name = "Deck", destroy_on_destination = False):
         """ Renders a card moving from one deck to another. """
 
         #   These methods are relevant if the objects are decks.
@@ -198,33 +210,43 @@ class Client(object):
         destination.add_card(num)
 
         if num:
-            if card == None:
-                card = CardRender(name, self.screen, pos = origin.send_pos(card))
+
+            #   TODO Make this if statement better, currently is super
+            #   sketchy. More generally, make card arrays and decks
+            #   work more similarly to each other.
+            if card == None and hasattr(origin, "find_with_name"):
+                card = origin.find_with_name(name)
+                origin.send_pos(card)
+            elif card == None:
+                card = CardRender(name, self.screen, pos=origin.send_pos(name))
                 self.cards.append(card)
             else:
                 origin.send_pos(card)
             card.transform(name)
             card.move_to(destination.receive_pos(card))
-            card.destroy_on_destination = destroy_on_destination
+            card.destroy_on_destination = destination.pile
 
     def generate_deck_dict(self):
         """ Links the name of a hand to the actual hand object. """
 
         self.deck_dict = {}
 
-        #   Add deck and discard
+        #   Add basic piles
         self.deck_dict["Deck"] = self.deck
         self.deck_dict["Discard"] = self.discard
+        self.deck_dict["Stage"] = self.stage
 
         #   Add hands for players
-        for player in self.players:
+        for player in self.players[:-1]:
             self.deck_dict["%s Hand" % player.name] = player.hand
+        self.deck_dict["%s Hand" % self.players[-1].name] = self.hand
 
     def interpret_msg(self, msg):
         """ Does whatever the message says. """
 
         split = msg.split(":")
 
+        #   What to do if the update type is "move"
         if split[1] == "move":
             params = split[2].split(",")
             origin = params[0]
@@ -233,6 +255,35 @@ class Client(object):
                 card = params[2]
             else:
                 card = "Deck"
+
+            #   Find objects for the deck names
+            origin_obj = self.deck_dict[origin]
+            dest_obj = self.deck_dict[destination]
+
+            #   Determine whether object should be destroyed or not on
+            #   being received
+
+          # TODO destroy cards going to facedown piles
+
+            self.log_print("Moving %s from %s to %s." % (card, origin, destination))
+            self.move_card(origin_obj, dest_obj, name=card)
+
+        if split[1] == "":
+            pass
+
+
+    def log_print(self, msg):
+        """ Print the update to the log. """
+
+        self.log.add_line(msg)
+        print(msg)
+
+
+    def deck_name_to_object(self, deck_name):
+        """ Finds the object given a deck's name. """
+
+        return self.deck_dict[deck_name]
+
 
 
     def draw_fps(self, dt):

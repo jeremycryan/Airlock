@@ -30,6 +30,7 @@ class CardRender(object):
         self.target_pos = pos
         self.render_pos = pos
         self.destroy_on_destination = False
+        self.pile = False
 
         #   Movement parameters
         self.max_speed = 1200    #   Pixels (?) per second
@@ -121,6 +122,9 @@ class CardRender(object):
         size = min_size
         self.card_font = pygame.font.SysFont(font, size)
         string = self.card_font.render(text, 1, color)
+        
+        if lock:
+            return string
 
         #   While the thing is small enough, make it bigger
         while string.get_width() < max_dims[0] - margin and \
