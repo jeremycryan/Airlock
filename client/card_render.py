@@ -8,6 +8,7 @@ import pygame
 
 #   Python libraries
 from math import sqrt
+from time import time
 
 known_images = {}
 
@@ -46,6 +47,16 @@ class CardRender(object):
         else:
             self.surface = self.generate_surface(self.path)
         known_images[self.path] = self.surface
+
+        #   Lighten effect
+        self.lighten_amt = 0
+        self.lighten_surface = pygame.Surface(self.card_size).convert()
+        self.lighten_surface.fill((255, 255, 255))
+
+        self.last_flash = 0
+        self.since_flash = 999
+        self.flash_period = 0.7
+        self.flash_intensity = 600
 
     def transform(self, new_name):
         """ Changes into a different card graphically. """
@@ -122,7 +133,7 @@ class CardRender(object):
         size = min_size
         self.card_font = pygame.font.SysFont(font, size)
         string = self.card_font.render(text, 1, color)
-        
+
         if lock:
             return string
 
@@ -200,14 +211,37 @@ class CardRender(object):
         if hard:
             self.alpha = alpha
 
+    def flash(self):
+        """ Flashes the card a lighter color briefly. """
+
+        self.last_flash = time()
+
+    def draw_flash(self):
+        """ Draws the flash effect on the card. """
+
+        #   Updates time-since-flash attribute
+        self.since_flash = time() - self.last_flash
+
+        if self.since_flash < self.flash_period:
+            self.lighten_amt = min(self.since_flash,
+                self.flash_period - self.since_flash) * self.flash_intensity
+            print(self.since_flash, self.flash_period, self.lighten_amt)
+
     def draw(self):
         """ Draws the card on the screen based on its render position. """
+
+        new_surf = self.surface.copy()
+        self.draw_flash()
 
         #   Camera smoothing
         self.screen.set_alpha(self.smoothing)
 
-        self.surface.set_alpha(self.alpha)
-        self.screen.blit(self.surface, self.render_pos)
+        #   Apply lighten effect
+        self.lighten_surface.set_alpha(self.lighten_amt)
+        new_surf.blit(self.lighten_surface.convert(), (0, 0))
+
+        new_surf.set_alpha(self.alpha)
+        self.screen.blit(new_surf, self.render_pos)
 
     def destroy_me(self):
         """ Determines whether this card wants to be destroyed. """

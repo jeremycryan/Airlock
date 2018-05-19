@@ -42,8 +42,10 @@ class PlayerSummary(object):
             deck_size = 0, owner = name, player_num = pos)
 
         #   Create mission and character cards
+        self.mission = mission
         self.mission_card = CardRender(mission, self.surf,
             pos = (MISS_X, MISS_Y))
+        self.character = character
         self.character_card = CardRender(character, self.surf,
             pos = (CHAR_X, CHAR_Y))
 
@@ -51,7 +53,8 @@ class PlayerSummary(object):
     def reveal_character(self, character):
         """ Reveals the player's character, or changes its state. """
 
-        self.character_card = CardRender(character, self.screen)
+        self.character_card = CardRender(character, self.surf,
+            pos = (CHAR_X, CHAR_Y))
 
 
     def generate_name_surface(self):
@@ -66,7 +69,8 @@ class PlayerSummary(object):
     def reveal_mission(self, mission):
         """ Reveal's the player's mission, or changes its state. """
 
-        self.mission_card = CardRender(mission, self.screen)
+        self.mission_card = CardRender(mission, self.surf,
+            pos = (MISS_X, MISS_Y))
 
 
     def draw_cards(self):

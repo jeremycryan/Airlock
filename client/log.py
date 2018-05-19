@@ -76,7 +76,6 @@ class Log(object):
         ypos = 0
         for idx, line in enumerate(self.lines):
             ypos = self.height - text_yoff + (idx) * self.line_break
-            print(ypos)
             self.surf.blit(line, (0, ypos))
 
         #   Blit the surface onto the passed screen.
