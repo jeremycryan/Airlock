@@ -10,10 +10,11 @@ AUTO_PLAY = False
 class Player(object):
     """ Player object, in case you couldn't tell from the line above. """
 
-    def __init__(self, game, name):
+    def __init__(self, game, name, socket = None):
         self.health = 2
         self.game = game
         self.name = name
+        self.socket = socket
         self.hand = Deck(game, "%s Hand" % name)
         self.permanents = Deck(game, "%s Permanents" % name)
         self.next_ally = None
@@ -33,7 +34,7 @@ class Player(object):
         if num > 0:
             print("Ouch! %s is at %s health." % (self.name, self.health))
         if num < 0:
-            print("%s has been restored to %s health." % (self.name, self.health))            
+            print("%s has been restored to %s health." % (self.name, self.health))
         self.game.publish(self.game.players, "damage", self, self.health)
         if self.health < 1 and self in self.game.live_players:
             self.game.kill(self)
@@ -42,7 +43,7 @@ class Player(object):
     def draw_from_deck(self, number):
         """ Draws a number of cards from the deck
         and adds them to the player's hand. """
-        
+
         self.game.draw_card(self.game.deck, self.hand, number)
 
 
@@ -80,7 +81,7 @@ class Player(object):
             if len(choices):
                 return random.choice(choices)
             return choices
-        
+
         if len(choices) == 1:
             return choices[0]
         elif len(choices) == 0:

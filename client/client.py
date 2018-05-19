@@ -48,6 +48,8 @@ class Client(object):
         self.cards = []
         self.decks = []
 
+        self.msg_queue = []
+
     def generate_oxygen(self, oxygen_profile, screen):
         """ Generates an oxygen cell object. """
         self.oxygen = OxygenCells(oxygen_profile, screen)
@@ -110,7 +112,6 @@ class Client(object):
             char_x = x_off + player.character_card.render_pos[0]
             char_y = y_off + player.character_card.render_pos[1]
             if char_x < x and x < char_x + CARD_WIDTH and char_y < y and y < char_y + CARD_HEIGHT:
-                print("FOUND CHARACTER")
                 return player.character_card
 
         return False
@@ -130,19 +131,39 @@ class Client(object):
         self.players.append(PlayerSummary(player_list[-1], self.screen, pos=6,
             is_main_player = True))
 
-    def demo_card(self):
+    def parse_players(self, player_string, player_name):
+        """ Parses the received player list and reorders the players such that
+        the active player is at the end of the list. """
+
+        players = player_string.split("/")
+
+        #   Make sure active player is at the end
+        pidx = players.index(player_name)
+        players = players[pidx:] + players[:pidx]
+        players += [players.pop(0)]
+
+        #   Create player objects.
+        self.assemble_players(players)
+
+
+    def demo_card(self, player_string, player_name):
         """ Makes a card that jumps around the screen a bit. """
+
+        self.parse_players(player_string, player_name)
 
         self.deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 50)
         self.discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
+        self.command_pile = DeckRender("CommandPile", self.screen, pos = COMMAND_PILE_POS, deck_size = 0)
+        self.to_discard = DeckRender("ToDiscard", self.screen, pos = TO_DISCARD_POS, deck_size = 0)
         self.decks.append(self.deck)
         self.decks.append(self.discard)
+        self.decks.append(self.command_pile)
+        self.decks.append(self.to_discard)
         self.generate_oxygen('bbbbrr', self.screen)
 
         self.stage = CardArray(STAGE_POS)
         self.hand = CardArray(HAND_POS, hand = True)
 
-        self.assemble_players(["Jeremy", "Ray", "Ppab", "Daniel", "Yichen"])
         self.generate_deck_dict()
 
         up = 0
@@ -163,11 +184,15 @@ class Client(object):
             self.draw_things(dt)
 
             new = time.time()
-            if since_last > 2:
-                self.interpret_msg("1:kill:Jeremy,Crew")
-                self.interpret_msg("2:oxygen:%s" % (self.oxygen.count - 1))
-                self.interpret_msg("6:move:%s,%s,%s" % (send_froms.pop(0), send_tos.pop(0), thing_list.pop()))
-                since_last = 0
+            if since_last > 1:
+                since_last -= 1
+
+                if since_last > 1:
+                    since_last = 0
+
+                if len(self.msg_queue):
+                    print(self.msg_queue)
+                    self.interpret_msg(self.msg_queue[0])
                 #since_last -= 2
                 # if len(hand.cards) > 2:
                     #self.move_card(hand, stage, card = hand.cards[0], name = hand.cards[0].name)
@@ -308,17 +333,32 @@ class Client(object):
         self.deck_dict["Deck"] = self.deck
         self.deck_dict["Discard"] = self.discard
         self.deck_dict["Stage"] = self.stage
+        self.deck_dict["ToDiscard"] = self.to_discard
+        self.deck_dict["CommandPile"] = self.command_pile
 
         #   Add hands for players
         for player in self.players[:-1]:
             self.deck_dict["%s Hand" % player.name] = player.hand
         self.deck_dict["%s Hand" % self.players[-1].name] = self.hand
 
+    def read_msg(self, msg):
+        """ Reads the message and adds to queue. """
+
+        split = msg.split(";")
+        for item in split:
+            self.msg_queue.append(item)
+
     def interpret_msg(self, msg):
         """ Does whatever the message says. """
 
+        if msg in self.msg_queue:
+            self.msg_queue.remove(msg)
+
+        if msg == "":
+            return
         split = msg.split(":")
 
+        print(msg)
         #   What to do if the update type is "move"
         if split[1] == "move":
             params = split[2].split(",")
@@ -410,7 +450,7 @@ class Client(object):
             player.reveal_character("%sDamaged" % player.character)
             player.reveal_mission(mission)
             self.log_print("%s has died! Their mission has been revealed to be \
-                %s." % (player.name.capitalize(), player.mission))
+                %s." % (player.name.capitalize(), mission))
 
         if split[1] == "reveal":
 
@@ -437,7 +477,6 @@ class Client(object):
         """ Print the update to the log. """
 
         self.log.add_line(msg)
-        print(msg)
 
 
     def deck_name_to_object(self, deck_name):
@@ -461,4 +500,4 @@ class Client(object):
 
 if __name__ == '__main__':
     client = Client()
-    client.main()
+    client.demo_card("Jeremy/Paul/Daniel", "Jeremy")

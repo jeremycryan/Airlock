@@ -79,11 +79,16 @@ OXYGEN_SPACING = 15
 
 #   Define position of draw and discard piles, relative to oxygen
 PILE_OFFSET = 340
-PILE_02_OFFSET = -CARD_HEIGHT
+PILE_02_OFFSET = -int(CARD_HEIGHT/2)
 DRAW_PILE_POS = (int(PR_MX + PILE_OFFSET/2),
     int(OXYGEN_POS[1] - CARD_HEIGHT * 1.5 - PILE_02_OFFSET))
 DISCARD_PILE_POS = (int(PR_MX - PILE_OFFSET/2 - CARD_WIDTH),
     int(OXYGEN_POS[1] - CARD_HEIGHT * 1.5 - PILE_02_OFFSET))
+
+#   Command and to_discard
+SECONDARY_VERTS = int(DRAW_PILE_POS[1] + CARD_HEIGHT*1.4)
+COMMAND_PILE_POS = (DRAW_PILE_POS[0], SECONDARY_VERTS)
+TO_DISCARD_POS = (DISCARD_PILE_POS[0], SECONDARY_VERTS)
 
 ################# SIDEBAR SETTINGS ####################################
 

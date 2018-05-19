@@ -8,6 +8,10 @@ import card_list
 import mission_list
 import character_list
 
+import socket
+import threading
+import time
+
 DECK_FILE = "expansion_cards"
 CHAOS = False
 
@@ -62,10 +66,10 @@ class Game(object):
         self.active_player = self.players[0]
         self.draw_card(self.deck, self.command_pile)
 
-    def add_player(self, name):
+    def add_player(self, name, socket = None):
         """ Adds a player of name 'name' to the game. """
 
-        self.players.append(Player(self, name))
+        self.players.append(Player(self, name, socket = socket))
 
     def load_settings(self, file_name):
         """ Initializes deck from a text file """
@@ -403,13 +407,124 @@ class Game(object):
         """ Sends a message to given players (None indicates all players) """
         arglist = ",".join([str(arg) for arg in args])
         message = "%d:%s:%s;" % (self.msg_index, event_type, arglist)
-        print(players,message) # TODO: send message
+
+        #print(players,message) # TODO: send message
         self.msg_index += 1
+
+        for player in players:
+            print(player, message)
+            num = self.player_to_number(player)
+            sock = self.player_sockets[num]
+            sock.send(message.encode())
+
+    def server_init(self, ip):
+        """ Returns a socket object to listen to players. """
+
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        IP_address = ip
+        PORT = 52801
+
+        server.bind((IP_address,PORT))
+        server.listen(500)
+
+        return server
+
+######################### SERVER AND CONNECTION BELOW ##########################
+
+    def player_to_number(self, player):
+        """ Returns the player number based on player name. """
+
+        print(player, [self.player_names[item] for item in self.player_names])
+        for item in self.player_names:
+            if self.player_names[item] == player.name:
+                return item
+
+    def wait_for_players(self):
+        """ Waits for players to send IPs and names. Adds players to the game
+        as they are received. """
+
+        print("Waiting for players...")
+        self.player_sockets = {}
+        self.player_names = {}
+
+        #   Open a socket to Google to find network ip
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        self.ip = s.getsockname()[0]
+
+        print("Server IP: %s" % self.ip)
+
+        #   Initialize a socket
+        self.server = self.server_init(self.ip)
+
+        self.accepting_players = True
+        player_thread = threading.Thread(target=self.accept_players)
+        player_thread.start()
+
+        msg = input("Press Enter to kick off.")
+        while len(self.player_sockets) < 2:
+            print("Need at least two players to start.")
+            msg = input("Press Enter to kick off.")
+
+        print("Waiting for all players to choose names:")
+
+        while len(self.player_sockets) > len(self.player_names):
+            pass
+
+        print("The game has started!")
+        print("Players: %s" % " ".join([self.player_names[i] for i in self.player_names]))
+
+        self.send_player_list_to_sockets()
+
+
+    def send_player_list_to_sockets(self):
+        """ Sends a list of players to each socket as a string separated by
+        slashes. """
+
+        player_string = "/".join(self.player_names[i] for i in self.player_names)
+        sockets = [self.player_sockets[i] for i in self.player_sockets]
+        for socket in sockets:
+            socket.send(player_string.encode())
+
+    def accept_players(self):
+        """ Thread to add players as they connect. """
+
+        id = 1
+        while self.accepting_players:
+            conn, addr = self.server.accept()
+
+            if not self.accepting_players:
+                break   #   Kill if not accepting players anymore
+
+            self.player_sockets[id] = conn
+            conn.send(str(id).encode())
+            print("Player %s added at %s." % (id, addr[0]))
+
+            #   Listen for the player's name, but continue accepting connections
+            a = threading.Thread(target=self.collect_name, args = (id, conn, addr))
+            a.start()
+            id += 1
+
+    def collect_name(self, id, conn, addr):
+        """ Collects the name for a player and compiles a list. """
+
+        #   Listen for a name
+        name = None
+        while not name:
+            msg = conn.recv(1024)
+            if msg:
+                name = msg.decode()
+
+        #   Great! That's a name.
+        self.player_names[id] = name
+        print("%s has joined the game (Player %s)." % (name, id))
+        self.add_player(name, socket = conn)
+
 
 if __name__ == '__main__':
     game = Game()
-    game.add_player('Paul')
-    game.add_player('Daniel')
-    game.add_player('Jeremy')
+    game.wait_for_players()
+    time.sleep(1)
     while 1:
         game.main()
