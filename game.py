@@ -238,7 +238,7 @@ class Game(object):
             else:
                 pile = self.get_player(choice).permanents
             choice.patch()
-            self.publish(self.players, "ability", "patch", pile, choice)
+            self.publish(self.players, "ability", "patch", self.active_player.name, pile, choice)
         elif choice in abilities:
             player.character.use_ability(choice)
         return choice != abstain[0]
@@ -264,7 +264,7 @@ class Game(object):
             if len(hidden):
                 self.msg_index -= 1
         if len(hidden):
-            self.publish(hidden, "move", deck1, deck2)   
+            self.publish(hidden, "move", deck1, deck2)
         deck2.add(deck1.remove(card))
         return card
 
@@ -272,10 +272,10 @@ class Game(object):
         """ Moves all cards from deck1 to deck2 """
 
         return self.draw_card(deck1, deck2, len(deck1.to_list()))
-    
+
     def draw_card(self, deck1, deck2, num=1):
         """ Moves a given number of cards from deck1 to deck2 """
-        
+
         return [self.move_card(card, deck1, deck2) for card in deck1.draw(num, True)]
 
     def next_player(self, skips = False):
@@ -381,7 +381,7 @@ class Game(object):
                         return True
         return False
 
-        
+
     def end_game(self, crew_won):
         """ Handle end of game cleanup """
         if self.reset:
