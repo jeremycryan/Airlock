@@ -37,8 +37,6 @@ class Mission(Card):
         if self.game.get_player(self) is self.game.active_player:
             for card in self.game.active_player.hand.to_list():
                 card.hidden = False
-        self.game.move_all(self.game.get_player(self).hand, self.game.to_discard)
-        self.game.move_all(self.game.get_player(self).permanents, self.game.to_discard)
         self.visible = True
         if not self.can_die:
             if self.is_red:

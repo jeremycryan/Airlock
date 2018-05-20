@@ -35,7 +35,7 @@ class Navigator(Character):
         self.abilities["Maneuver"] = 1
 
     def maneuver(self):
-        self.game.publish(self.game.players, "ability", self.game.active_player.name, "maneuver")
+        self.game.publish(self.game.players, "ability", "Maneuver", self.game.active_player.name)
         player = self.game.get_player(self)
         temp = Deck(self.game)
         self.game.draw_card(self.game.deck, temp, 3)
@@ -135,9 +135,9 @@ class Autopilot(Character):
 class Stowaway(Character):
     def __init__(self, game):
         Character.__init__(self, game, "Stowaway")
-        self.abilities["Infiltrate"] = 0 # TODO: forgot the name of this ability
+        self.abilities["Infiltrate"] = 0
 
-    def impersonate(self):
+    def infiltrate(self):
         player = self.game.get_player(self)
         options = {k:self for k in self.abilities.keys()}
         for target in self.game.live_players:
