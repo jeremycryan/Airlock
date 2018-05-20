@@ -78,6 +78,11 @@ OXYGEN_POS = (PLAYER_REGION_X + MID_X,
     PLAYER_REGION_Y + MID_Y - 240)
 OXYGEN_SPACING = 15
 
+################# STAGE SETTINGS ######################################
+
+STAGE_VERT_OFFSET = 100
+STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
+
 ################# PILE LAYOUT #########################################
 
 #   Define position of draw and discard piles, relative to oxygen
@@ -92,6 +97,9 @@ DISCARD_PILE_POS = (int(PR_MX - PILE_OFFSET/2 - CARD_WIDTH),
 SECONDARY_VERTS = int(DRAW_PILE_POS[1] + CARD_HEIGHT*1.4)
 COMMAND_PILE_POS = (DRAW_PILE_POS[0], SECONDARY_VERTS)
 TO_DISCARD_POS = (DISCARD_PILE_POS[0], SECONDARY_VERTS)
+
+#   Temporary pile for wormhole and salvage
+TEMP_POS = (int(PR_MX - CARD_WIDTH/2), STAGE_POS[1] + CARD_HEIGHT)
 
 ################# SIDEBAR SETTINGS ####################################
 
@@ -114,11 +122,6 @@ ARRAY_SPACING = 20
 
 HAND_SCALE = 1.0
 HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
-
-################# STAGE SETTINGS ######################################
-
-STAGE_VERT_OFFSET = 100
-STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
 
 ################# ANIMATION SETTINGS ##################################
 

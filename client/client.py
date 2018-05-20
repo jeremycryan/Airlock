@@ -151,15 +151,17 @@ class Client(object):
 
         self.parse_players(player_string, player_name)
 
+        #   Assemble decks
         self.deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 50)
         self.discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
-        self.command_pile = DeckRender("CommandPile", self.screen, pos = COMMAND_PILE_POS, deck_size = 0)
-        self.to_discard = DeckRender("ToDiscard", self.screen, pos = TO_DISCARD_POS, deck_size = 0)
+        self.command_pile = DeckRender("Command Pile", self.screen, pos = COMMAND_PILE_POS, deck_size = 0)
+        self.to_discard = DeckRender("To Discard", self.screen, pos = TO_DISCARD_POS, deck_size = 0)
+        self.temp = DeckRender("Temporary", self.screen, pos = TEMP_POS, deck_size = 0)
 
-        self.decks.append(self.deck)
-        self.decks.append(self.discard)
-        self.decks.append(self.command_pile)
-        self.decks.append(self.to_discard)
+        #   Add all of the decks to a list to render
+        for deck in [self.deck, self.discard, self.command_pile, self.to_discard,
+            self.temp]:
+            self.decks.append(deck)
 
         self.generate_oxygen('bbbbrr', self.screen)
 
@@ -348,6 +350,7 @@ class Client(object):
         self.deck_dict["Stage"] = self.stage
         self.deck_dict["ToDiscard"] = self.to_discard
         self.deck_dict["CommandPile"] = self.command_pile
+        self.deck_dict["temp"] = self.temp
 
         #   Add permanents piles for each player
         for player in self.players:
@@ -409,7 +412,7 @@ class Client(object):
             self.log_print("%s was played." % card)
 
         #   What to do if the update type is "ability"
-        if split[1] == "ability":
+        elif split[1] == "ability":
 
             #   TODO again, currently just flashes the character card.
             new_split = split[2].split(",")
@@ -423,7 +426,7 @@ class Client(object):
             if len(new_split) > 2:
                 self.log_print("Targets: %s." % ", ".join(new_split[2:]))
 
-        if split[1] == "oxygen":
+        elif split[1] == "oxygen":
 
             if int(split[2]) >= 0:
                 while self.oxygen.count > int(split[2]):
@@ -436,7 +439,7 @@ class Client(object):
                         "s"*(diff>1))
                     self.oxygen_count = int(split[2])
 
-        if split[1] == "damage":
+        elif split[1] == "damage":
 
             msg = split[2].split(",")
             playername = msg[0]
@@ -457,7 +460,7 @@ class Client(object):
             if self.anim:
                 player.character_card.flash()
 
-        if split[1] == "kill":
+        elif split[1] == "kill":
 
             msg = split[2].split(",")
             playername = msg[0]
@@ -472,7 +475,7 @@ class Client(object):
             self.log_print("%s has died! Their mission has been revealed to be \
                 %s." % (player.name.capitalize(), mission))
 
-        if split[1] == "reveal":
+        elif split[1] == "reveal":
 
             msg = split[2].split(",")
             playername = msg[0]
@@ -487,7 +490,7 @@ class Client(object):
             self.log_print("%s's mission has been revealed to be \
                 %s." % (player.name.capitalize(), player.mission))
 
-        if split[1] == "character":
+        elif split[1] == "character":
 
             msg = split[2].split(",")
             playername = msg[0]
@@ -503,7 +506,12 @@ class Client(object):
             self.log_print("%s has been dealt the %s card." % \
                 (player.name.capitalize(), character))
 
-        if split[1] == "win":
+        elif split[1] == "deck":
+
+            self.deck.deck_size = int(split[2])
+            self.log_print("The deck is starting with %s cards." % split[2])
+
+        elif split[1] == "win":
 
             winners = split[2]
             self.log_print("The %s team has won!" % winners)

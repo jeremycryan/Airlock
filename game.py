@@ -37,6 +37,10 @@ class Game(object):
         self.msg_index = 0
         self.create_oxygen()
         self.create_decks()
+
+        #   Send size of deck to client
+        self.publish(self.players, "deck", str(self.deck.size()))
+
         self.reset = False
         random.shuffle(self.players)
         self.live_players = self.players[:]

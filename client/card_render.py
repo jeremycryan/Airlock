@@ -32,7 +32,7 @@ class CardRender(object):
         self.render_pos = pos
         self.destroy_on_destination = False
         self.pile = False
-        self.display_mode = "full"
+        self.display_type = "full"
 
         #   Movement parameters
         self.max_speed = 1200    #   Pixels (?) per second
@@ -245,7 +245,7 @@ class CardRender(object):
     def draw(self):
         """ Draws the card on the screen based on its render position. """
 
-        if self.display_mode == "icon":
+        if self.display_type == "icon":
             new_surf = self.icon_surface.copy()
         else:
             new_surf = self.surface.copy()

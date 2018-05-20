@@ -19,7 +19,7 @@ class PermanentsRender(CardArray):
         modifies the positions of other cards to make room. """
 
         #   Change cards to icons on receive
-        card.display_mode = "icon"
+        card.display_type = "icon"
 
         self.cards.append(card)
         self.correct_positions()
@@ -30,7 +30,7 @@ class PermanentsRender(CardArray):
         """ Returns the position cards should be thrown from. """
 
         #   Change cards to full display on exit
-        card.display_mode = "full"
+        card.display_type = "full"
 
         self.cards.remove(card)
         self.correct_positions()
