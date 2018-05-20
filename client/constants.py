@@ -68,6 +68,9 @@ PLAYER_HAND_POS = (0, 0)
 PLAYER_HAND_SCALE = 0.7
 PLAYER_HAND_YOFF = 0
 
+#   Permanents settings
+PERMANENTS_POS = (int(PLAYER_WIDTH/2), int(PLAYER_HEIGHT - CARD_WIDTH*0.5))
+
 ################## OXYGEN OBJECT SETTINGS #############################
 
 #   Position of the center of the oxygen cells on the screen
@@ -116,6 +119,11 @@ HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
 
 STAGE_VERT_OFFSET = 100
 STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
+
+################# ANIMATION SETTINGS ##################################
+
+#   Delay between animations, in seconds
+ACTION_LENGTH = 1
 
 ################# FONTS ###############################################
 

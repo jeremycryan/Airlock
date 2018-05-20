@@ -32,6 +32,7 @@ class CardRender(object):
         self.render_pos = pos
         self.destroy_on_destination = False
         self.pile = False
+        self.display_mode = "full"
 
         #   Movement parameters
         self.max_speed = 1200    #   Pixels (?) per second
@@ -48,6 +49,9 @@ class CardRender(object):
             self.surface = self.generate_surface(self.path)
         known_images[self.path] = self.surface
 
+        #   Generate icon surface
+        self.generate_icon_surface()
+
         #   Lighten effect
         self.lighten_amt = 0
         self.lighten_surface = pygame.Surface(self.card_size).convert()
@@ -57,6 +61,16 @@ class CardRender(object):
         self.since_flash = 999
         self.flash_period = 0.7
         self.flash_intensity = 600
+
+    def generate_icon_surface(self):
+        """ Generates a surface smaller than the original for use as an icon """
+
+        self.icon_surface = pygame.Surface((int(CARD_WIDTH * 0.7),
+            int(CARD_WIDTH * 0.7)))
+        self.icon_surface.blit(self.surface, (int(-CARD_WIDTH * 0.3),
+            int(-CARD_WIDTH * 0.3)))
+        self.icon_surface = pygame.transform.scale(self.icon_surface,
+            (int(CARD_WIDTH * 0.4), int(CARD_WIDTH * 0.4)))
 
     def transform(self, new_name):
         """ Changes into a different card graphically. """
@@ -74,7 +88,8 @@ class CardRender(object):
         """ Changes the scale of the card. """
 
         self.scale = new_scale
-        self.card_size = (int(CARD_WIDTH * new_scale), int(CARD_HEIGHT * new_scale))
+        self.card_size = (int(CARD_WIDTH * new_scale),
+            int(CARD_HEIGHT * new_scale))
         path = "%s.png" % self.name.lower()
         self.surface = self.generate_surface(path)
 
@@ -230,7 +245,11 @@ class CardRender(object):
     def draw(self):
         """ Draws the card on the screen based on its render position. """
 
-        new_surf = self.surface.copy()
+        if self.display_mode == "icon":
+            new_surf = self.icon_surface.copy()
+        else:
+            new_surf = self.surface.copy()
+
         self.draw_flash()
 
         #   Camera smoothing
@@ -241,6 +260,7 @@ class CardRender(object):
         new_surf.blit(self.lighten_surface.convert(), (0, 0))
 
         new_surf.set_alpha(self.alpha)
+
         self.screen.blit(new_surf, self.render_pos)
 
     def destroy_me(self):

@@ -59,10 +59,22 @@ class Game(object):
                 print("Mission not found: %s" % name)
         missions.shuffle()
         # Deal cards
+
+        #   Assign missions, and tell each player what their mission is
         for player in self.players:
             player.mission = missions.draw()[0]
+            self.publish([player], 'reveal', player.name, player.mission.name)
+
+        #   Assign characters
+        for player in self.players:
             player.character = characters.draw()[0]
+            self.publish(self.players, 'character', player.name,
+                player.character.name)
+
+        #   Deal cards to each player
+        for player in self.players:
             player.draw_up(2)
+
         self.active_player = self.players[0]
         self.draw_card(self.deck, self.command_pile)
 
@@ -417,6 +429,8 @@ class Game(object):
             sock = self.player_sockets[num]
             sock.send(message.encode())
 
+######################### SERVER AND CONNECTION BELOW ##########################
+
     def server_init(self, ip):
         """ Returns a socket object to listen to players. """
 
@@ -429,8 +443,6 @@ class Game(object):
         server.listen(500)
 
         return server
-
-######################### SERVER AND CONNECTION BELOW ##########################
 
     def player_to_number(self, player):
         """ Returns the player number based on player name. """

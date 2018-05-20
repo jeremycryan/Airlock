@@ -155,10 +155,12 @@ class Client(object):
         self.discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
         self.command_pile = DeckRender("CommandPile", self.screen, pos = COMMAND_PILE_POS, deck_size = 0)
         self.to_discard = DeckRender("ToDiscard", self.screen, pos = TO_DISCARD_POS, deck_size = 0)
+
         self.decks.append(self.deck)
         self.decks.append(self.discard)
         self.decks.append(self.command_pile)
         self.decks.append(self.to_discard)
+
         self.generate_oxygen('bbbbrr', self.screen)
 
         self.stage = CardArray(STAGE_POS)
@@ -184,14 +186,19 @@ class Client(object):
             self.draw_things(dt)
 
             new = time.time()
-            if since_last > 1:
-                since_last -= 1
 
-                if since_last > 1:
+            #   If you have animations turned off, do all messages immediately.
+            if not self.anim:
+                self.flush_msg_queue()
+
+            #   Have a small delay between animating items.
+            if since_last > ACTION_LENGTH:
+                since_last -= ACTION_LENGTH
+
+                if since_last > ACTION_LENGTH:
                     since_last = 0
 
                 if len(self.msg_queue):
-                    print(self.msg_queue)
                     self.interpret_msg(self.msg_queue[0])
                 #since_last -= 2
                 # if len(hand.cards) > 2:
@@ -206,6 +213,12 @@ class Client(object):
                 #     self.move_card(deck, p4.hand, name = "Aftershock", destroy_on_destination = True)
                 # a.move_to((random.randrange(0, WINDOW_WIDTH),
                 #    random.randrange(0, WINDOW_HEIGHT)))
+
+    def flush_msg_queue(self):
+        """ Runs all commands in the message queue. """
+
+        while len(self.msg_queue):
+            self.interpret_msg(self.msg_queue[0])
 
     def draw_things(self, dt):
         """ Draws essential items on the screen. """
@@ -336,6 +349,10 @@ class Client(object):
         self.deck_dict["ToDiscard"] = self.to_discard
         self.deck_dict["CommandPile"] = self.command_pile
 
+        #   Add permanents piles for each player
+        for player in self.players:
+            self.deck_dict["%s Permanents" % player.name] = player.permanents
+
         #   Add hands for players
         for player in self.players[:-1]:
             self.deck_dict["%s Hand" % player.name] = player.hand
@@ -358,7 +375,6 @@ class Client(object):
             return
         split = msg.split(":")
 
-        print(msg)
         #   What to do if the update type is "move"
         if split[1] == "move":
             params = split[2].split(",")
@@ -367,7 +383,7 @@ class Client(object):
             if len(params) > 2:
                 card = params[2]
             else:
-                card = "Deck"
+                card = "Unknown"
 
             #   Find objects for the deck names
             origin_obj = self.deck_dict[origin]
@@ -387,7 +403,7 @@ class Client(object):
             #   TODO currently just flashes... maybe something more interesting?
             card = split[2]
             card_obj = self.stage.find_with_name(card)
-            if hasattr(card_obj, "flash"):
+            if hasattr(card_obj, "flash") and self.anim:
                 card_obj.flash()
 
             self.log_print("%s was played." % card)
@@ -400,7 +416,7 @@ class Client(object):
             ability = new_split[0]
             user = new_split[1]
             for player in self.players:
-                if player.name == user:
+                if player.name == user and self.anim:
                     player.character_card.flash()
 
             self.log_print("%s has used the %s ability." % (user.capitalize(), ability))
@@ -437,6 +453,10 @@ class Client(object):
                 player.reveal_character("%sDamaged" % player.character)
                 self.log_print("%s has taken character damage." % player.name.capitalize())
 
+            #   Add a flash effect
+            if self.anim:
+                player.character_card.flash()
+
         if split[1] == "kill":
 
             msg = split[2].split(",")
@@ -466,6 +486,22 @@ class Client(object):
 
             self.log_print("%s's mission has been revealed to be \
                 %s." % (player.name.capitalize(), player.mission))
+
+        if split[1] == "character":
+
+            msg = split[2].split(",")
+            playername = msg[0]
+            character = msg[1]
+
+            for player in self.players:
+                if player.name == playername:
+                    break
+
+            player.character = character
+            player.reveal_character(character)
+
+            self.log_print("%s has been dealt the %s card." % \
+                (player.name.capitalize(), character))
 
         if split[1] == "win":
 

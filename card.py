@@ -50,7 +50,7 @@ class Character(Card):
     """ Represents a player's Character card """
 
     def __init__(self, game, name):
-        Card.__init__(self, game, name)
+        Card.__init__(self, game, name=name)
         self.abilities = {"Refresh":1}
 
     def on_vote(self, player):
@@ -68,4 +68,5 @@ class Character(Card):
     def refresh(self):
         self.game.active_player.discard()
         self.game.active_player.draw_from_deck(1)
-        self.game.publish(self.game.players, "ability", "Refresh")
+        self.game.publish(self.game.players, "ability", "Refresh",
+            self.active_player.name)
