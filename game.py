@@ -202,6 +202,11 @@ class Game(object):
             self.main_phase(player)
 
         # Discard
+        for player in self.players:
+            if not player in self.live_players:
+                self.move_all(player.hand, self.to_discard)
+                self.move_all(player.permanents, self.to_discard)
+        
         for card in self.find_all_malfunctions():
             if hasattr(card, "on_discard"):
                 card.on_discard()
