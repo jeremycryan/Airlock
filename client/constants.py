@@ -69,7 +69,7 @@ PLAYER_HAND_SCALE = 0.7
 PLAYER_HAND_YOFF = 0
 
 #   Permanents settings
-PERMANENTS_POS = (int(PLAYER_WIDTH/2), int(PLAYER_HEIGHT - CARD_WIDTH*0.5))
+PERMANENTS_POS = (int(PLAYER_WIDTH/2), int(PLAYER_HEIGHT + CARD_WIDTH*0.2))
 
 ################## OXYGEN OBJECT SETTINGS #############################
 

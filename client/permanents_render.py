@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from card_array import CardArray
+from constants import *
 
 class PermanentsRender(CardArray):
     """ Renders permanents (e.g. Energy, Hull Breach) as little circles. """
@@ -23,8 +24,7 @@ class PermanentsRender(CardArray):
         self.cards.append(card)
         self.correct_positions()
 
-        return (card.target_pos[0] + self.player_x,
-            card.target_pos[1] + self.player_y)
+        return card.target_pos
 
     def send_pos(self, card):
         """ Returns the position cards should be thrown from. """
@@ -37,3 +37,13 @@ class PermanentsRender(CardArray):
         if self.hand:
             card.set_scale(1.0)
         return card.render_pos
+
+    def get_correct_position(self, card):
+        """ Determines what the x and y position of a card should be, based
+        on its position in the array. """
+
+        idx = self.cards.index(card)
+        xpos = int(self.pos[0] - self.width()/5 + idx*(CARD_WIDTH*0.4 + \
+            self.get_array_spacing()))
+        ypos = int(self.pos[1] - self.height()/2)
+        return (xpos + self.player_x, ypos + self.player_y)

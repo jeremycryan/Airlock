@@ -69,4 +69,4 @@ class Character(Card):
         self.game.active_player.discard()
         self.game.active_player.draw_from_deck(1)
         self.game.publish(self.game.players, "ability", "Refresh",
-            self.active_player.name)
+            self.game.active_player.name)
