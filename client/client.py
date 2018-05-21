@@ -8,6 +8,7 @@ from card_array import CardArray
 from oxygen_cells import OxygenCells
 from player_summary import PlayerSummary
 from client_helpers import source_path
+from button_array import ButtonArray
 
 #   Python libraries
 import time
@@ -49,6 +50,7 @@ class Client(object):
         self.decks = []
 
         self.msg_queue = []
+        self.prompt_options = None
 
     def generate_oxygen(self, oxygen_profile, screen):
         """ Generates an oxygen cell object. """
@@ -85,6 +87,35 @@ class Client(object):
 
         self.remove_extra_cards()
 
+    def activate_card(self, card):
+        """ Sends a response to the server that the card was selected, if the
+        server is listening. """
+
+        #   Check to see whether a card has been clicked at all
+        if card:
+
+            #   See if server is awaiting a response from the player, and that
+            #   the card is a valid response
+            if self.prompt_options:
+                if card.name in self.prompt_options:
+
+                    self.prompt_options = None
+                    self.server_socket.send(card.name.encode())
+
+                else:
+
+                    self.log_print("%s is not a valid choice." % card.name)
+
+    def activate_button(self, option):
+        """ Sends a response to the surver that the button option was selected. """
+
+        if option:
+            if self.prompt_options:
+                if option in self.prompt_options:
+                    self.prompt_options = None
+                    self.server_socket.send(option.encode())
+
+
     def clear_screen(self, troubleshoot = False):
         """ Clears the screen to all black. """
         self.screen.fill((0, 0, 0))
@@ -118,8 +149,11 @@ class Client(object):
 
     def update_pygame_events(self):
         """ Weird pygame stuff. Events don't happen unless you look at them. """
+        self.clicked = False
+
         for event in pygame.event.get():
-            pass
+            if event.type == pygame.MOUSEBUTTONUP:
+                self.clicked = True
 
     def assemble_players(self, player_list):
         """ Assumes the last item in player_list is the active player. Generates
@@ -136,6 +170,7 @@ class Client(object):
         the active player is at the end of the list. """
 
         players = player_string.split("/")
+        players = players[::-1]
 
         #   Make sure active player is at the end
         pidx = players.index(player_name)
@@ -152,19 +187,24 @@ class Client(object):
         self.parse_players(player_string, player_name)
 
         #   Assemble decks
-        self.deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 50)
+        self.generate_oxygen('bbbbrr', self.screen)
+        self.deck = DeckRender("Deck", self.screen, pos = DRAW_PILE_POS, deck_size = 0)
         self.discard = DeckRender("Discard", self.screen, pos = DISCARD_PILE_POS, deck_size = 0)
         self.command_pile = DeckRender("Command Pile", self.screen, pos = COMMAND_PILE_POS, deck_size = 0)
         self.to_discard = DeckRender("To Discard", self.screen, pos = TO_DISCARD_POS, deck_size = 0)
         self.temp = DeckRender("Temporary", self.screen, pos = TEMP_POS, deck_size = 0)
+        self.global_permanents = DeckRender("Contaminate", self.screen, pos = self.oxygen.most_recent_damaged_pos(), deck_size = 0)
 
         #   Add all of the decks to a list to render
         for deck in [self.deck, self.discard, self.command_pile, self.to_discard,
-            self.temp]:
+            self.temp, self.global_permanents]:
             self.decks.append(deck)
 
-        self.generate_oxygen('bbbbrr', self.screen)
+        #   Initialize a button array
+        self.option_buttons = ButtonArray(self.ui, max_dims = OPTION_ARRAY_DIMS,
+            pos = OPTION_ARRAY_POS)
 
+        #   Initialize stage and hand
         self.stage = CardArray(STAGE_POS)
         self.hand = CardArray(HAND_POS, hand = True)
 
@@ -192,6 +232,8 @@ class Client(object):
             #   If you have animations turned off, do all messages immediately.
             if not self.anim:
                 self.flush_msg_queue()
+
+            self.global_permanents.move_to(self.oxygen.most_recent_damaged_pos())
 
             #   Have a small delay between animating items.
             if since_last > ACTION_LENGTH:
@@ -235,22 +277,45 @@ class Client(object):
         self.update_card_movement(dt)
         self.draw_cards()
 
+        #   Make buttons for the choices the player needs to make
+        if self.prompt_options:
+            self.option_buttons.options = self.prompt_options
+        else:
+            self.option_buttons.clear()
+
         #   Draw card preview and lighten selected card
         for card in self.cards[::-1]:
             card.lighten_amt = 0
         for card in [player.character_card for player in self.players]:
             card.lighten_amt = 0
         hovered = self.get_hover_card()
+        button_hovered = self.button_hovered()
         if hovered:
             self.draw_preview(hovered)
             hovered.lighten_amt = 50
+
+        #   Activate cards that are clicked!
+        if self.clicked and hovered:
+            self.activate_card(hovered)
+        elif self.clicked and button_hovered:
+            self.activate_button(button_hovered)
+
 
         #   Draw FPS and log on the side
         self.draw_fps(dt)
         self.log.draw()
 
+        #   Draw option buttons
+        self.option_buttons.draw()
+
         #   Commit items to screen and display
         self.update_screen(dt)
+
+    def button_hovered(self):
+        """ Returns the option the mouse is hovering over, or None. """
+
+        mouse_pos = pygame.mouse.get_pos()
+        return self.option_buttons.get_clicked(mouse_pos)
 
     def draw_preview(self, card):
         """ Draws a zoom-in of a card the player is hovering over. """
@@ -318,6 +383,14 @@ class Client(object):
         name = "Deck", destroy_on_destination = False):
         """ Renders a card moving from one deck to another. """
 
+        #   FIXME get better solution to this problem. Malfunctions need the
+        #   player name so they are distinguishable from each other, but adding
+        #   the name in breaks everything that relies on the original card name.
+        
+        #   Strip out special cases where names break the thing
+        if "Hull Breach" in name:
+            name = "Hull Breach"
+
         #   These methods are relevant if the objects are decks.
         num = origin.remove_card(1, obj = card)
         destination.add_card(num)
@@ -351,6 +424,7 @@ class Client(object):
         self.deck_dict["ToDiscard"] = self.to_discard
         self.deck_dict["CommandPile"] = self.command_pile
         self.deck_dict["temp"] = self.temp
+        self.deck_dict["GlobalPermanents"] = self.global_permanents
 
         #   Add permanents piles for each player
         for player in self.players:
@@ -435,9 +509,9 @@ class Client(object):
 
                 if int(split[2]) > self.oxygen.count:
                     diff = int(split[2]) - self.oxygen.count
-                    self.log_print("%s oxygen cell%s restored.") % (int(diff),
-                        "s"*(diff>1))
-                    self.oxygen_count = int(split[2])
+                    self.log_print("%s oxygen cell%s restored." % (int(diff),
+                        "s"*(diff>1)))
+                    self.oxygen.count = int(split[2])
 
         elif split[1] == "damage":
 
@@ -509,12 +583,21 @@ class Client(object):
         elif split[1] == "deck":
 
             self.deck.deck_size = int(split[2])
+            self.deck.refresh_name_surface()
             self.log_print("The deck is starting with %s cards." % split[2])
 
         elif split[1] == "win":
 
             winners = split[2]
             self.log_print("The %s team has won!" % winners)
+
+        elif split[1] == "prompt":
+
+            options = split[2]
+            options = options.split(",")
+            option_string = ", ".join(options)
+            self.log_print("Choose between the following: %s." % option_string)
+            self.prompt_options = options
 
 
     def log_print(self, msg):

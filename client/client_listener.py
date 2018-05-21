@@ -46,6 +46,7 @@ class Listener(object):
 
         #   Open client.
         self.client = Client()
+        self.client.server_socket = self.server
         listen_thread = threading.Thread(target = self.listen_for_messages)
         listen_thread.start()
         self.client.demo_card(self.players, self.name)

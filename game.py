@@ -222,11 +222,11 @@ class Game(object):
             self.main_phase(player)
 
         # Discard
-        for player in self.players:
-            if not player in self.live_players:
-                self.move_all(player.hand, self.to_discard)
-                self.move_all(player.permanents, self.to_discard)
-        
+        for player_iter in self.players:
+            if not player_iter in self.live_players:
+                self.move_all(player_iter.hand, self.to_discard)
+                self.move_all(player_iter.permanents, self.to_discard)
+
         for card in self.find_all_malfunctions():
             if hasattr(card, "on_discard"):
                 card.on_discard()
@@ -426,7 +426,11 @@ class Game(object):
 
     def publish(self, players, event_type, *args):
         """ Sends a message to given players (None indicates all players) """
+
+        if type(args[0]) == list:
+            args = args[0]
         arglist = ",".join([str(arg) for arg in args])
+
         message = "%d:%s:%s;" % (self.msg_index, event_type, arglist)
 
         #print(players,message) # TODO: send message
@@ -436,7 +440,12 @@ class Game(object):
             print(player, message)
             num = self.player_to_number(player)
             sock = self.player_sockets[num]
-            sock.send(message.encode())
+
+            #   Try to send via socket
+            try:
+                sock.send(message.encode())
+            except BrokenPipeError:
+                print("Could not contact %s." % player)
 
 ######################### SERVER AND CONNECTION BELOW ##########################
 

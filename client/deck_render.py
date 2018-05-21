@@ -25,6 +25,12 @@ class DeckRender(CardRender):
         #   Generates surface for deck name
         self.name_surface = self.generate_name_surface()
 
+    def refresh_name_surface(self):
+        """ Re-generates the name surface, in case they changed abruptly. """
+
+        #   Regenerate card number surfaces
+        self.num, self.num_shadow = self.generate_numbers()
+
     def generate_numbers(self):
         """ Generates the surfaces for deck count. """
 

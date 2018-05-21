@@ -22,7 +22,6 @@ class Player(object):
         self.mission = "Crew"
         self.color = "blue"
 
-
     def __repr__(self):
         return self.name
 
@@ -93,16 +92,21 @@ class Player(object):
             choice_strings = [c.visible_name() for c in choices]
         else:
             choice_strings = [str(c) for c in choices]
-        print(prompt_string + ", ".join(choice_strings))
-        choice = input()
-        while choice not in choice_strings:
-            if choice.isdigit():
-                if int(choice) > 0 and int(choice) <= len(choices):
-                    return choices[int(choice)-1]
-            print("That's not a valid choice. Choose again.")
-            choice = input()
 
+        # print(prompt_string + ", ".join(choice_strings))
+        # choice = input()
+        # while choice not in choice_strings:
+        #     if choice.isdigit():
+        #         if int(choice) > 0 and int(choice) <= len(choices):
+        #             return choices[int(choice)-1]
+        #     print("That's not a valid choice. Choose again.")
+        #     choice = input()
+
+        self.game.publish([self], "prompt", choice_strings)
+
+        choice =  self.socket.recv(1024).decode()
         return choices[choice_strings.index(choice)]
 
+
     def reset(self):
-        Player.__init__(self, self.game, self.name)
+        Player.__init__(self, self.game, self.name, socket = self.socket)

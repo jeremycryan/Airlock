@@ -41,10 +41,10 @@ MISS_X = PLAYER_X
 MISS_Y = PLAYER_Y
 
 #   Maximum rectangle of user interface, including player summaries
-PLAYER_REGION_X = WINDOW_WIDTH * 0.125   #   offset from screen center
+PLAYER_REGION_X = WINDOW_WIDTH * 0.11   #   offset from screen center
 PLAYER_REGION_Y = 0     #   offset from screen center
 PLAYER_REGION_HEIGHT = WINDOW_HEIGHT * 0.92
-PLAYER_REGION_WIDTH = WINDOW_WIDTH * 0.7
+PLAYER_REGION_WIDTH = WINDOW_WIDTH * 0.73
 
 #   Easier-to-work-with variables
 PR_LX = PLAYER_REGION_X + MID_X - int(PLAYER_REGION_WIDTH/2)
@@ -70,6 +70,7 @@ PLAYER_HAND_YOFF = 0
 
 #   Permanents settings
 PERMANENTS_POS = (int(PLAYER_WIDTH/2), int(PLAYER_HEIGHT + CARD_WIDTH*0.2))
+GLOBAL_PERM_POS = (100, 100)
 
 ################## OXYGEN OBJECT SETTINGS #############################
 
@@ -103,16 +104,25 @@ TEMP_POS = (int(PR_MX - CARD_WIDTH/2), STAGE_POS[1] + CARD_HEIGHT)
 
 ################# SIDEBAR SETTINGS ####################################
 
-SIDEBAR_WIDTH = WINDOW_WIDTH * 0.25
+SIDEBAR_WIDTH = WINDOW_WIDTH * 0.22
 SIDEBAR_X_MARG = 20
 SIDEBAR_Y_MARG = 50
 
 LOG_WIDTH = SIDEBAR_WIDTH * 0.88
-LOG_HEIGHT = WINDOW_HEIGHT * 0.35
+LOG_HEIGHT = WINDOW_HEIGHT * 0.20
 LOG_XPOS = SIDEBAR_WIDTH * 0.06
-LOG_YPOS = WINDOW_HEIGHT * 0.62
+LOG_YPOS = WINDOW_HEIGHT * 0.77
 
 PREVIEW_MARGIN = 45
+
+################# BUTTON SPACING ######################################
+
+OPTION_ARRAY_WIDTH = LOG_WIDTH
+OPTION_ARRAY_HEIGHT = WINDOW_HEIGHT*0.2
+OPTION_ARRAY_DIMS = (OPTION_ARRAY_WIDTH, OPTION_ARRAY_HEIGHT)
+SPACING_FROM_LOG = 15
+OPTION_ARRAY_POS = (LOG_XPOS,
+    int(LOG_YPOS - SPACING_FROM_LOG - OPTION_ARRAY_HEIGHT))
 
 ################# CARD ARRAY SETTINGS #################################
 
@@ -126,7 +136,7 @@ HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
 ################# ANIMATION SETTINGS ##################################
 
 #   Delay between animations, in seconds
-ACTION_LENGTH = 1
+ACTION_LENGTH = 0.85
 
 ################# FONTS ###############################################
 
@@ -134,3 +144,4 @@ CARDFONT = "None"
 DECKFONT = "None"
 PLAYERFONT = "None"
 LOGFONT = "None"
+BUTTONFONT = "None"
