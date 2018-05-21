@@ -35,13 +35,6 @@ class Rupture(Card):
 
         self.resolve()
 
-    def resolve(self):
-        """ What happens after the card gets played """
-
-        #   Remove card from stage and add to discard
-        self.game.stage.remove(self)
-        self.game.to_discard.add(self)
-
     def immune_to_cancel(self):
         """ Determines whether the card effect can be prevented,
         e.g. by nullify """
@@ -605,7 +598,7 @@ class Execute(Card):
             print("%s has been killed." % nominee)
 
         self.resolve()
-        
+
 class Shift(Card):
 
     def __init__(self, game):
@@ -658,4 +651,3 @@ class Nullify(Card):
                                    prompt_string = "Choose a card to nullify. ")
             self.game.move_card(target, self.game.stage, self.game.to_discard)
         self.resolve()
-

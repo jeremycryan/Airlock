@@ -41,10 +41,10 @@ MISS_X = PLAYER_X
 MISS_Y = PLAYER_Y
 
 #   Maximum rectangle of user interface, including player summaries
-PLAYER_REGION_X = WINDOW_WIDTH * 0.125   #   offset from screen center
+PLAYER_REGION_X = WINDOW_WIDTH * 0.11   #   offset from screen center
 PLAYER_REGION_Y = 0     #   offset from screen center
 PLAYER_REGION_HEIGHT = WINDOW_HEIGHT * 0.92
-PLAYER_REGION_WIDTH = WINDOW_WIDTH * 0.7
+PLAYER_REGION_WIDTH = WINDOW_WIDTH * 0.73
 
 #   Easier-to-work-with variables
 PR_LX = PLAYER_REGION_X + MID_X - int(PLAYER_REGION_WIDTH/2)
@@ -68,6 +68,10 @@ PLAYER_HAND_POS = (0, 0)
 PLAYER_HAND_SCALE = 0.7
 PLAYER_HAND_YOFF = 0
 
+#   Permanents settings
+PERMANENTS_POS = (int(PLAYER_WIDTH/2), int(PLAYER_HEIGHT + CARD_WIDTH*0.2))
+GLOBAL_PERM_POS = (100, 100)
+
 ################## OXYGEN OBJECT SETTINGS #############################
 
 #   Position of the center of the oxygen cells on the screen
@@ -75,28 +79,50 @@ OXYGEN_POS = (PLAYER_REGION_X + MID_X,
     PLAYER_REGION_Y + MID_Y - 240)
 OXYGEN_SPACING = 15
 
+################# STAGE SETTINGS ######################################
+
+STAGE_VERT_OFFSET = 100
+STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
+
 ################# PILE LAYOUT #########################################
 
 #   Define position of draw and discard piles, relative to oxygen
 PILE_OFFSET = 340
-PILE_02_OFFSET = -CARD_HEIGHT
+PILE_02_OFFSET = -int(CARD_HEIGHT/2)
 DRAW_PILE_POS = (int(PR_MX + PILE_OFFSET/2),
     int(OXYGEN_POS[1] - CARD_HEIGHT * 1.5 - PILE_02_OFFSET))
 DISCARD_PILE_POS = (int(PR_MX - PILE_OFFSET/2 - CARD_WIDTH),
     int(OXYGEN_POS[1] - CARD_HEIGHT * 1.5 - PILE_02_OFFSET))
 
+#   Command and to_discard
+SECONDARY_VERTS = int(DRAW_PILE_POS[1] + CARD_HEIGHT*1.4)
+COMMAND_PILE_POS = (DRAW_PILE_POS[0], SECONDARY_VERTS)
+TO_DISCARD_POS = (DISCARD_PILE_POS[0], SECONDARY_VERTS)
+
+#   Temporary pile for wormhole and salvage
+TEMP_POS = (int(PR_MX - CARD_WIDTH/2), STAGE_POS[1] + CARD_HEIGHT)
+
 ################# SIDEBAR SETTINGS ####################################
 
-SIDEBAR_WIDTH = WINDOW_WIDTH * 0.25
+SIDEBAR_WIDTH = WINDOW_WIDTH * 0.22
 SIDEBAR_X_MARG = 20
 SIDEBAR_Y_MARG = 50
 
 LOG_WIDTH = SIDEBAR_WIDTH * 0.88
-LOG_HEIGHT = WINDOW_HEIGHT * 0.35
+LOG_HEIGHT = WINDOW_HEIGHT * 0.20
 LOG_XPOS = SIDEBAR_WIDTH * 0.06
-LOG_YPOS = WINDOW_HEIGHT * 0.62
+LOG_YPOS = WINDOW_HEIGHT * 0.77
 
 PREVIEW_MARGIN = 45
+
+################# BUTTON SPACING ######################################
+
+OPTION_ARRAY_WIDTH = LOG_WIDTH
+OPTION_ARRAY_HEIGHT = WINDOW_HEIGHT*0.2
+OPTION_ARRAY_DIMS = (OPTION_ARRAY_WIDTH, OPTION_ARRAY_HEIGHT)
+SPACING_FROM_LOG = 15
+OPTION_ARRAY_POS = (LOG_XPOS,
+    int(LOG_YPOS - SPACING_FROM_LOG - OPTION_ARRAY_HEIGHT))
 
 ################# CARD ARRAY SETTINGS #################################
 
@@ -107,10 +133,10 @@ ARRAY_SPACING = 20
 HAND_SCALE = 1.0
 HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
 
-################# STAGE SETTINGS ######################################
+################# ANIMATION SETTINGS ##################################
 
-STAGE_VERT_OFFSET = 100
-STAGE_POS = (OXYGEN_POS[0], OXYGEN_POS[1] + STAGE_VERT_OFFSET + CARD_HEIGHT)
+#   Delay between animations, in seconds
+ACTION_LENGTH = 0.85
 
 ################# FONTS ###############################################
 
@@ -118,3 +144,4 @@ CARDFONT = "None"
 DECKFONT = "None"
 PLAYERFONT = "None"
 LOGFONT = "None"
+BUTTONFONT = "None"

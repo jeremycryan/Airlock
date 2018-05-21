@@ -56,6 +56,16 @@ class OxygenCells(object):
             self.oxygen_cards.append(render)
 
 
+    def most_recent_damaged_pos(self):
+        """ Returns the position of the most recently damaged cell. """
+
+        idx = len(self.oxygen_profile) - self.count - 1
+        if idx < 0:
+            idx = 0
+        return (self.oxygen_cards[idx].render_pos[0] + self.pos[0],
+            self.oxygen_cards[idx].render_pos[1] + self.pos[1])
+
+
     def get_oxygen_surface(self):
         """ Returns a surface for the oxygen cells object """
 

@@ -10,17 +10,17 @@ AUTO_PLAY = False
 class Player(object):
     """ Player object, in case you couldn't tell from the line above. """
 
-    def __init__(self, game, name):
+    def __init__(self, game, name, socket = None):
         self.health = 2
         self.game = game
         self.name = name
+        self.socket = socket
         self.hand = Deck(game, "%s Hand" % name)
         self.permanents = Deck(game, "%s Permanents" % name)
         self.next_ally = None
         self.skipped = False
         self.mission = "Crew"
         self.color = "blue"
-
 
     def __repr__(self):
         return self.name
@@ -33,7 +33,7 @@ class Player(object):
         if num > 0:
             print("Ouch! %s is at %s health." % (self.name, self.health))
         if num < 0:
-            print("%s has been restored to %s health." % (self.name, self.health))            
+            print("%s has been restored to %s health." % (self.name, self.health))
         self.game.publish(self.game.players, "damage", self, self.health)
         if self.health < 1 and self in self.game.live_players:
             self.game.kill(self)
@@ -42,7 +42,7 @@ class Player(object):
     def draw_from_deck(self, number):
         """ Draws a number of cards from the deck
         and adds them to the player's hand. """
-        
+
         self.game.draw_card(self.game.deck, self.hand, number)
 
 
@@ -80,7 +80,7 @@ class Player(object):
             if len(choices):
                 return random.choice(choices)
             return choices
-        
+
         if len(choices) == 1:
             return choices[0]
         elif len(choices) == 0:
@@ -92,16 +92,21 @@ class Player(object):
             choice_strings = [c.visible_name() for c in choices]
         else:
             choice_strings = [str(c) for c in choices]
-        print(prompt_string + ", ".join(choice_strings))
-        choice = input()
-        while choice not in choice_strings:
-            if choice.isdigit():
-                if int(choice) > 0 and int(choice) <= len(choices):
-                    return choices[int(choice)-1]
-            print("That's not a valid choice. Choose again.")
-            choice = input()
 
+        # print(prompt_string + ", ".join(choice_strings))
+        # choice = input()
+        # while choice not in choice_strings:
+        #     if choice.isdigit():
+        #         if int(choice) > 0 and int(choice) <= len(choices):
+        #             return choices[int(choice)-1]
+        #     print("That's not a valid choice. Choose again.")
+        #     choice = input()
+
+        self.game.publish([self], "prompt", choice_strings)
+
+        choice =  self.socket.recv(1024).decode()
         return choices[choice_strings.index(choice)]
 
+
     def reset(self):
-        Player.__init__(self, self.game, self.name)
+        Player.__init__(self, self.game, self.name, socket = self.socket)

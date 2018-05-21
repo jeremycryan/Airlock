@@ -119,9 +119,9 @@ class Quartermaster(Character):
         else:
             target.damage(-1)
 
-class AI(Character):
+class Autopilot(Character):
     def __init__(self, game):
-        Character.__init__(self, game, "AI")
+        Character.__init__(self, game, "Autopilot")
         self.abilities["Hack"] = 1 # TODO: forgot the name of this ability
 
     def hack(self):

@@ -3,6 +3,7 @@
 from card_render import CardRender
 from deck_render import DeckRender
 from hand_render import HandRender
+from permanents_render import PermanentsRender
 from constants import *
 
 #   Outside libraries
@@ -48,6 +49,9 @@ class PlayerSummary(object):
         self.character = character
         self.character_card = CardRender(character, self.surf,
             pos = (CHAR_X, CHAR_Y))
+
+        #   Little row of permanent icons
+        self.permanents = PermanentsRender(PERMANENTS_POS, self)
 
 
     def reveal_character(self, character):

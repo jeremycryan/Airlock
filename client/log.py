@@ -32,7 +32,8 @@ class Log(object):
 
         #   Pygame surface
         self.screen = screen
-        self.surf = pygame.Surface((self.width, self.height)).convert_alpha()
+        self.surf = pygame.Surface((self.width, self.height)).convert()
+        self.surf.set_alpha(150)
 
 
     def add_line(self, text):
@@ -63,8 +64,6 @@ class Log(object):
                 num_to_try = len(words)
             else:
                 break
-
-        return
 
     def draw(self):
         """ Draws the text of the log on the screen. """
