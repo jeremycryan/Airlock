@@ -386,7 +386,7 @@ class Client(object):
         #   FIXME get better solution to this problem. Malfunctions need the
         #   player name so they are distinguishable from each other, but adding
         #   the name in breaks everything that relies on the original card name.
-        
+
         #   Strip out special cases where names break the thing
         if "Hull Breach" in name:
             name = "Hull Breach"

@@ -17,7 +17,7 @@ class Doctor(Character):
 
 class Captain(Character):
     def __init__(self, game):
-        Character.__init__(self, game, "Doctor")
+        Character.__init__(self, game, "Captain")
         self.abilities["Command"] = 1
 
     def command(self):
