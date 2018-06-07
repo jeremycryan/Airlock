@@ -27,7 +27,9 @@ class Client(object):
         pygame.mouse.set_visible(True)
 
         #   Actual screen
-        self.screen_commit = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
+        self.screen_commit = pygame.Surface([WINDOW_WIDTH, WINDOW_HEIGHT])
+        self.real_display = pygame.display.set_mode([ALT_WINDOW_WIDTH,
+                                                    ALT_WINDOW_HEIGHT])
         pygame.display.set_caption("Project Airlock")
         self.last_fps_blit = 0
         self.fps = 0
@@ -128,7 +130,7 @@ class Client(object):
         """ Returns the card the cursor is hovering over. """
 
         #   Get current mouse position
-        x, y = pygame.mouse.get_pos()
+        x, y = self.mouse_pos()
 
         #   Look for cards in card arrays
         for card in self.cards[::-1]:
@@ -193,7 +195,7 @@ class Client(object):
         self.command_pile = DeckRender("Command Pile", self.screen, pos = COMMAND_PILE_POS, deck_size = 0)
         self.to_discard = DeckRender("To Discard", self.screen, pos = TO_DISCARD_POS, deck_size = 0)
         self.temp = DeckRender("Temporary", self.screen, pos = TEMP_POS, deck_size = 0)
-        self.global_permanents = DeckRender("Contaminate", self.screen, pos = self.oxygen.most_recent_damaged_pos(), deck_size = 0)
+        self.global_permanents = DeckRender("Contaminate", self.screen, pos = self.oxygen.most_recent_damaged_pos(), deck_size = 0, has_name = False)
 
         #   Add all of the decks to a list to render
         for deck in [self.deck, self.discard, self.command_pile, self.to_discard,
@@ -235,6 +237,11 @@ class Client(object):
 
             self.global_permanents.move_to(self.oxygen.most_recent_damaged_pos())
 
+            #   Don't delay between prompt messages for usability
+            if len(self.msg_queue):
+                if ":prompt:" in self.msg_queue[0]:
+                    self.interpret_msg(self.msg_queue[0])
+
             #   Have a small delay between animating items.
             if since_last > ACTION_LENGTH:
                 since_last -= ACTION_LENGTH
@@ -242,21 +249,9 @@ class Client(object):
                 if since_last > ACTION_LENGTH:
                     since_last = 0
 
+                #   If there is a message in the queue, execute it
                 if len(self.msg_queue):
                     self.interpret_msg(self.msg_queue[0])
-                #since_last -= 2
-                # if len(hand.cards) > 2:
-                    #self.move_card(hand, stage, card = hand.cards[0], name = hand.cards[0].name)
-                #self.move_card(deck, discard, name = "Discard")
-
-                #self.move_card(deck, hand, name = thing_list.pop())
-                #self.destroy_oxygen()
-                # if len(hand.cards) < 3:
-                #     since_last += 1.5
-                # else:
-                #     self.move_card(deck, p4.hand, name = "Aftershock", destroy_on_destination = True)
-                # a.move_to((random.randrange(0, WINDOW_WIDTH),
-                #    random.randrange(0, WINDOW_HEIGHT)))
 
     def flush_msg_queue(self):
         """ Runs all commands in the message queue. """
@@ -314,8 +309,19 @@ class Client(object):
     def button_hovered(self):
         """ Returns the option the mouse is hovering over, or None. """
 
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = self.mouse_pos()
         return self.option_buttons.get_clicked(mouse_pos)
+
+    def mouse_pos(self):
+        """ Returns the position of the mouse, accounting for
+        screen scaling. """
+
+        mp = pygame.mouse.get_pos()
+        yscale = WINDOW_HEIGHT/ALT_WINDOW_HEIGHT
+        xscale = WINDOW_WIDTH/ALT_WINDOW_WIDTH
+        mouse_pos = (int(mp[0]*xscale), int(mp[1]*yscale))
+
+        return mouse_pos
 
     def draw_preview(self, card):
         """ Draws a zoom-in of a card the player is hovering over. """
@@ -348,6 +354,10 @@ class Client(object):
         #   blit fake screen onto real screen
         self.screen_commit.blit(self.screen, (self.screen_offset))
         self.screen_commit.blit(self.ui, (0, 0))
+        frame = pygame.transform.scale(self.screen_commit,
+            [ALT_WINDOW_WIDTH,
+            ALT_WINDOW_HEIGHT])
+        self.real_display.blit(frame, [0, 0])
         pygame.display.flip()
 
     def update_camera_shake(self, dt):
@@ -598,6 +608,12 @@ class Client(object):
             option_string = ", ".join(options)
             self.log_print("Choose between the following: %s." % option_string)
             self.prompt_options = options
+
+        elif split[1] == "turn":
+
+            player = split[2]
+            self.log_print("%s has started their turn." % player.capitalize())
+            #   TODO Add visual indicator for active player
 
 
     def log_print(self, msg):
