@@ -24,6 +24,10 @@ class DeckRender(CardRender):
 
         #   Generates surface for deck name
         self.name_surface = self.generate_name_surface()
+        if "has_name" in kwargs:
+            self.has_name = kwargs["has_name"]
+        else:
+            self.has_name = True
 
     def refresh_name_surface(self):
         """ Re-generates the name surface, in case they changed abruptly. """
@@ -71,11 +75,12 @@ class DeckRender(CardRender):
         card_img.set_alpha(255)
         self.screen.blit(card_img, self.render_pos)
 
-        ns_h = self.name_surface.get_height()
-        ns_w = self.name_surface.get_width()
-        self.screen.blit(self.name_surface,
-            (int(self.render_pos[0] - ns_w/2 + CARD_WIDTH/2),
-            int(self.render_pos[1] - ns_h/2 - 20)))
+        if self.has_name:
+            ns_h = self.name_surface.get_height()
+            ns_w = self.name_surface.get_width()
+            self.screen.blit(self.name_surface,
+                (int(self.render_pos[0] - ns_w/2 + CARD_WIDTH/2),
+                int(self.render_pos[1] - ns_h/2 - 20)))
 
     def generate_name_surface(self):
         """ Generates a surface for the deck's name. """

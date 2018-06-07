@@ -98,6 +98,11 @@ class Game(object):
                 text = file.read().split("\n")
                 for line in text:
                     line = line.replace(" ","")
+
+                    #   Skip lines that aren't formatted correctly
+                    if len(line.split(":")) != 2:
+                        continue
+
                     (key, value) = line.split(":")
                     args = value.split(",")
                     if key == "Oxygen":
@@ -169,6 +174,7 @@ class Game(object):
         """ Carries out a single turn """
         player = self.active_player
         print("Start of " + player.name + "'s turn")
+        self.publish(self.players, "turn", player.name)
         # Start of turn effects
         if self.safe_next_turn:
             self.safe_next_turn = False
@@ -480,8 +486,12 @@ class Game(object):
 
         #   Open a socket to Google to find network ip
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        self.ip = s.getsockname()[0]
+        try:
+            s.connect(("8.8.8.8", 80))
+            self.ip = s.getsockname()[0]
+        except OSError:
+            print("Not connected to network. Starting server locally.")
+            self.ip = "127.0.0.1"
 
         print("Server IP: %s" % self.ip)
 
