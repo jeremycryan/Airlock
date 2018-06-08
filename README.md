@@ -7,6 +7,8 @@ First, install pygame:
 python3 -m pip install -U pygame --user
 ```
 
+If this doesn't work, take a look at the [pygame installation guide](https://www.pygame.org/wiki/GettingStarted).
+
 After cloning this repository, you can start a server instance by calling `python3 game.py` in the main directory. You can then run a client instance by running `python3 client_listener.py` while in the client folder. Client instances should be able to connect to a server on the same network.
 
 ### General functionality
