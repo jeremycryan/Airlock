@@ -1,3 +1,6 @@
 # ignore pycache files
 *.pyc
 __pycache__/*
+
+# ignore graphics folder
+client/airlockgraphics/*
