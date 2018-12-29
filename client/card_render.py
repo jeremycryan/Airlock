@@ -146,7 +146,7 @@ class CardRender(object):
         if lock is true, only size min_size will be tested."""
 
         size = min_size
-        self.card_font = pygame.font.SysFont(font, size)
+        self.card_font = pygame.font.Font(font, size)
         string = self.card_font.render(text, 1, color)
 
         if lock:
@@ -159,12 +159,12 @@ class CardRender(object):
             string.get_height() < max_height:
 
             #   Generate a new surface and increase the size
-            self.card_font = pygame.font.SysFont(font, size)
+            self.card_font = pygame.font.Font(font, size)
             string = self.card_font.render(text, 1, color)
             size += 1
 
         #   Make it slightly smaller than it was
-        self.card_font = pygame.font.SysFont(font, size-2)
+        self.card_font = pygame.font.Font(font, size-2)
         string = self.card_font.render(text, 1, color)
 
         return string

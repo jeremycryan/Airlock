@@ -74,7 +74,7 @@ class ButtonArray(object):
 
             #   Draw the text onto another surface
             size = 30
-            button_font = pygame.font.SysFont(BUTTONFONT, size)
+            button_font = pygame.font.Font(BUTTONFONT, size)
             text_render = button_font.render(option, 1, (0, 0, 0))
             text_x = int(x + self.width/2 - text_render.get_width()/2)
             text_y = int(y + height_each/2 - text_render.get_height()/2)

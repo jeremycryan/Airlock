@@ -65,7 +65,7 @@ class PlayerSummary(object):
         """ Generates a surface for the player's name. """
 
         color = (255, 255, 255)
-        font = pygame.font.SysFont(PLAYERFONT, 40)
+        font = pygame.font.Font(PLAYERFONT, 35)
         string = font.render(self.name, 1, color)
         return string
 

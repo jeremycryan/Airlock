@@ -40,6 +40,7 @@ class Client(object):
         self.ui = pygame.Surface([SIDEBAR_WIDTH, WINDOW_HEIGHT])
         self.log = Log(self.ui)
         self.screen_offset = (0, 0)
+        pygame.display.flip()
 
         #   Screen shake settings
         self.anim = True
@@ -636,7 +637,7 @@ class Client(object):
             self.fps = int(0.2*1/dt + 0.8*self.fps)
             self.last_fps_blit = time.time()
         color = (255, 255, 255)
-        font = pygame.font.SysFont(PLAYERFONT, 25)
+        font = pygame.font.Font(PLAYERFONT, 25)
         string = font.render("FPS: %s" % self.fps, 1, color)
         self.ui.blit(string, (20, 20))
 
