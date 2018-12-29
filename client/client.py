@@ -14,6 +14,7 @@ from button_array import ButtonArray
 import time
 import random
 from math import sin
+import sys
 
 #   Outside libraries
 import pygame
@@ -82,7 +83,9 @@ class Client(object):
     def update_card_movement(self, dt):
         """ Updates the position of all cards. """
 
-        for card in self.cards:
+        player_chars = [player.character_card for player in self.players]
+        player_missions = [player.mission_card for player in self.players]
+        for card in self.cards + player_chars + player_missions:
             if not self.anim:
                 card.move_render_to(card.target_pos)
             else:
@@ -133,10 +136,14 @@ class Client(object):
         #   Get current mouse position
         x, y = self.mouse_pos()
 
+        for card in self.cards[::-1] + [player.character_card for player in self.players] + [player.mission_card for player in self.players]:
+            card.is_hovered = False
+
         #   Look for cards in card arrays
         for card in self.cards[::-1]:
             if card.render_pos[0] < x and x < card.render_pos[0] + CARD_WIDTH:
                 if card.render_pos[1] < y and y < card.render_pos[1] + CARD_HEIGHT:
+                    card.is_hovered = True
                     return card
 
         #   Look for character cards
@@ -146,7 +153,13 @@ class Client(object):
             char_x = x_off + player.character_card.render_pos[0]
             char_y = y_off + player.character_card.render_pos[1]
             if char_x < x and x < char_x + CARD_WIDTH and char_y < y and y < char_y + CARD_HEIGHT:
+                player.character_card.is_hovered = True
                 return player.character_card
+            miss_x = x_off + player.mission_card.render_pos[0]
+            miss_y = y_off + player.mission_card.render_pos[1]
+            if miss_x < x and x < miss_x + CARD_WIDTH and miss_y < y and y < miss_y + CARD_HEIGHT:
+                player.mission_card.is_hovered = True
+                return player.mission_card
 
         return False
 
@@ -157,6 +170,9 @@ class Client(object):
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONUP:
                 self.clicked = True
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
     def assemble_players(self, player_list):
         """ Assumes the last item in player_list is the active player. Generates
@@ -240,8 +256,17 @@ class Client(object):
 
             #   Don't delay between prompt messages for usability
             if len(self.msg_queue):
-                if ":prompt:" in self.msg_queue[0]:
-                    self.interpret_msg(self.msg_queue[0])
+
+                for i, item in enumerate(self.msg_queue):
+                    if (":deck:" in item) or (":character:" in item) or (":reveal:" in item):
+                        self.interpret_msg(item)
+                        since_last = 0
+                    if (":prompt:" in item):
+                        self.interpret_msg(item)
+                        since_last = 0
+                                        
+                #if ":prompt:" in self.msg_queue[0]:
+                #    self.interpret_msg(self.msg_queue[0])
 
             #   Have a small delay between animating items.
             if since_last > ACTION_LENGTH:
@@ -284,11 +309,14 @@ class Client(object):
             card.lighten_amt = 0
         for card in [player.character_card for player in self.players]:
             card.lighten_amt = 0
+        for card in [player.mission_card for player in self.players]:
+            card.lighten_amt = 0
+            
         hovered = self.get_hover_card()
         button_hovered = self.button_hovered()
         if hovered:
             self.draw_preview(hovered)
-            hovered.lighten_amt = 50
+            hovered.lighten_amt = max(50, hovered.lighten_amt)
 
         #   Activate cards that are clicked!
         if self.clicked and hovered:
@@ -480,7 +508,6 @@ class Client(object):
             #   Determine whether object should be destroyed or not on
             #   being received
 
-          # TODO destroy cards going to facedown piles
 
             self.log_print("Moving %s from %s to %s." % (card, origin, destination))
             self.move_card(origin_obj, dest_obj, name=card)

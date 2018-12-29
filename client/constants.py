@@ -138,7 +138,7 @@ HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
 ################# ANIMATION SETTINGS ##################################
 
 #   Delay between animations, in seconds
-ACTION_LENGTH = 0.85
+ACTION_LENGTH = 0.6
 
 ################# FONTS ###############################################
 
