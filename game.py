@@ -11,6 +11,7 @@ import character_list
 import socket
 import threading
 import time
+import sys
 
 DECK_FILE = "expansion_cards"
 CHAOS = False
@@ -489,6 +490,8 @@ class Game(object):
         try:
             s.connect(("8.8.8.8", 80))
             self.ip = s.getsockname()[0]
+            if len(sys.argv) > 1:
+                self.ip = sys.argv[1]
         except OSError:
             print("Not connected to network. Starting server locally.")
             self.ip = "127.0.0.1"

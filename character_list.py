@@ -136,6 +136,8 @@ class Stowaway(Character):
     def __init__(self, game):
         Character.__init__(self, game, "Stowaway")
         self.abilities["Infiltrate"] = 0
+        #   FIXME Make this ability cost 2 energy, and only be usable if the
+        #   player has two energy.
 
     def infiltrate(self):
         player = self.game.get_player(self)

@@ -5,8 +5,8 @@
 #   Size of the window, in pixels
 WINDOW_WIDTH = 1600
 WINDOW_HEIGHT = 900
-ALT_WINDOW_WIDTH = 800
-ALT_WINDOW_HEIGHT = 450
+ALT_WINDOW_WIDTH = 1600
+ALT_WINDOW_HEIGHT = 900
 MID_X = int(WINDOW_WIDTH/2)
 MID_Y = int(WINDOW_HEIGHT/2)
 
@@ -138,12 +138,12 @@ HAND_POS = (OXYGEN_POS[0], int(PR_BY - CARD_HEIGHT*HAND_SCALE/HAND_SCALE))
 ################# ANIMATION SETTINGS ##################################
 
 #   Delay between animations, in seconds
-ACTION_LENGTH = 0.85
+ACTION_LENGTH = 0.6
 
 ################# FONTS ###############################################
 
-CARDFONT = "None"
-DECKFONT = "None"
-PLAYERFONT = "None"
-LOGFONT = "None"
-BUTTONFONT = "None"
+CARDFONT = "Myriad.otf"
+DECKFONT = "Myriad.otf"
+PLAYERFONT = "Myriad.otf"
+LOGFONT = "Myriad.otf"
+BUTTONFONT = "Myriad.otf"

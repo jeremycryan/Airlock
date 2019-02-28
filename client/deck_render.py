@@ -42,14 +42,14 @@ class DeckRender(CardRender):
             str(self.deck_size),
             DECKFONT,
             max_height = int(self.height()/3),
-            min_size = 55)
+            min_size = 45)
 
         second_string = self.generate_good_font(self.card_size,
             str(self.deck_size),
             DECKFONT,
             max_height = int(self.height()/3),
             color = (255, 255, 255),
-            min_size = 55)
+            min_size = 45)
 
         return(string, second_string)
 
@@ -87,7 +87,7 @@ class DeckRender(CardRender):
 
         font = DECKFONT
         return self.generate_good_font(CARDSIZE, self.name, font,
-            color = (120, 90, 120), min_size = 30, lock = True)
+            color = (120, 90, 120), min_size = 23, lock = True)
 
     def remove_card(self, n=1, obj = None):
         """ Removes a number of cards from the deck. """
