@@ -14,6 +14,7 @@ from button_array import ButtonArray
 import time
 import random
 from math import sin
+import sys
 
 #   Outside libraries
 import pygame
@@ -27,7 +28,9 @@ class Client(object):
         pygame.mouse.set_visible(True)
 
         #   Actual screen
-        self.screen_commit = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
+        self.screen_commit = pygame.Surface([WINDOW_WIDTH, WINDOW_HEIGHT])
+        self.real_display = pygame.display.set_mode([ALT_WINDOW_WIDTH,
+                                                    ALT_WINDOW_HEIGHT])
         pygame.display.set_caption("Project Airlock")
         self.last_fps_blit = 0
         self.fps = 0
@@ -38,6 +41,7 @@ class Client(object):
         self.ui = pygame.Surface([SIDEBAR_WIDTH, WINDOW_HEIGHT])
         self.log = Log(self.ui)
         self.screen_offset = (0, 0)
+        pygame.display.flip()
 
         #   Screen shake settings
         self.anim = True
@@ -79,7 +83,9 @@ class Client(object):
     def update_card_movement(self, dt):
         """ Updates the position of all cards. """
 
-        for card in self.cards:
+        player_chars = [player.character_card for player in self.players]
+        player_missions = [player.mission_card for player in self.players]
+        for card in self.cards + player_chars + player_missions:
             if not self.anim:
                 card.move_render_to(card.target_pos)
             else:
@@ -128,12 +134,16 @@ class Client(object):
         """ Returns the card the cursor is hovering over. """
 
         #   Get current mouse position
-        x, y = pygame.mouse.get_pos()
+        x, y = self.mouse_pos()
+
+        for card in self.cards[::-1] + [player.character_card for player in self.players] + [player.mission_card for player in self.players]:
+            card.is_hovered = False
 
         #   Look for cards in card arrays
         for card in self.cards[::-1]:
             if card.render_pos[0] < x and x < card.render_pos[0] + CARD_WIDTH:
                 if card.render_pos[1] < y and y < card.render_pos[1] + CARD_HEIGHT:
+                    card.is_hovered = True
                     return card
 
         #   Look for character cards
@@ -143,7 +153,13 @@ class Client(object):
             char_x = x_off + player.character_card.render_pos[0]
             char_y = y_off + player.character_card.render_pos[1]
             if char_x < x and x < char_x + CARD_WIDTH and char_y < y and y < char_y + CARD_HEIGHT:
+                player.character_card.is_hovered = True
                 return player.character_card
+            miss_x = x_off + player.mission_card.render_pos[0]
+            miss_y = y_off + player.mission_card.render_pos[1]
+            if miss_x < x and x < miss_x + CARD_WIDTH and miss_y < y and y < miss_y + CARD_HEIGHT:
+                player.mission_card.is_hovered = True
+                return player.mission_card
 
         return False
 
@@ -154,6 +170,9 @@ class Client(object):
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONUP:
                 self.clicked = True
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
     def assemble_players(self, player_list):
         """ Assumes the last item in player_list is the active player. Generates
@@ -193,7 +212,7 @@ class Client(object):
         self.command_pile = DeckRender("Command Pile", self.screen, pos = COMMAND_PILE_POS, deck_size = 0)
         self.to_discard = DeckRender("To Discard", self.screen, pos = TO_DISCARD_POS, deck_size = 0)
         self.temp = DeckRender("Temporary", self.screen, pos = TEMP_POS, deck_size = 0)
-        self.global_permanents = DeckRender("Contaminate", self.screen, pos = self.oxygen.most_recent_damaged_pos(), deck_size = 0)
+        self.global_permanents = DeckRender("Contaminate", self.screen, pos = self.oxygen.most_recent_damaged_pos(), deck_size = 0, has_name = False)
 
         #   Add all of the decks to a list to render
         for deck in [self.deck, self.discard, self.command_pile, self.to_discard,
@@ -235,6 +254,20 @@ class Client(object):
 
             self.global_permanents.move_to(self.oxygen.most_recent_damaged_pos())
 
+            #   Don't delay between prompt messages for usability
+            if len(self.msg_queue):
+
+                for i, item in enumerate(self.msg_queue):
+                    if (":deck:" in item) or (":character:" in item) or (":reveal:" in item):
+                        self.interpret_msg(item)
+                        since_last = 0
+                    if (":prompt:" in item):
+                        self.interpret_msg(item)
+                        since_last = 0
+                                        
+                #if ":prompt:" in self.msg_queue[0]:
+                #    self.interpret_msg(self.msg_queue[0])
+
             #   Have a small delay between animating items.
             if since_last > ACTION_LENGTH:
                 since_last -= ACTION_LENGTH
@@ -242,21 +275,9 @@ class Client(object):
                 if since_last > ACTION_LENGTH:
                     since_last = 0
 
+                #   If there is a message in the queue, execute it
                 if len(self.msg_queue):
                     self.interpret_msg(self.msg_queue[0])
-                #since_last -= 2
-                # if len(hand.cards) > 2:
-                    #self.move_card(hand, stage, card = hand.cards[0], name = hand.cards[0].name)
-                #self.move_card(deck, discard, name = "Discard")
-
-                #self.move_card(deck, hand, name = thing_list.pop())
-                #self.destroy_oxygen()
-                # if len(hand.cards) < 3:
-                #     since_last += 1.5
-                # else:
-                #     self.move_card(deck, p4.hand, name = "Aftershock", destroy_on_destination = True)
-                # a.move_to((random.randrange(0, WINDOW_WIDTH),
-                #    random.randrange(0, WINDOW_HEIGHT)))
 
     def flush_msg_queue(self):
         """ Runs all commands in the message queue. """
@@ -288,11 +309,14 @@ class Client(object):
             card.lighten_amt = 0
         for card in [player.character_card for player in self.players]:
             card.lighten_amt = 0
+        for card in [player.mission_card for player in self.players]:
+            card.lighten_amt = 0
+            
         hovered = self.get_hover_card()
         button_hovered = self.button_hovered()
         if hovered:
             self.draw_preview(hovered)
-            hovered.lighten_amt = 50
+            hovered.lighten_amt = max(50, hovered.lighten_amt)
 
         #   Activate cards that are clicked!
         if self.clicked and hovered:
@@ -314,8 +338,19 @@ class Client(object):
     def button_hovered(self):
         """ Returns the option the mouse is hovering over, or None. """
 
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = self.mouse_pos()
         return self.option_buttons.get_clicked(mouse_pos)
+
+    def mouse_pos(self):
+        """ Returns the position of the mouse, accounting for
+        screen scaling. """
+
+        mp = pygame.mouse.get_pos()
+        yscale = WINDOW_HEIGHT/ALT_WINDOW_HEIGHT
+        xscale = WINDOW_WIDTH/ALT_WINDOW_WIDTH
+        mouse_pos = (int(mp[0]*xscale), int(mp[1]*yscale))
+
+        return mouse_pos
 
     def draw_preview(self, card):
         """ Draws a zoom-in of a card the player is hovering over. """
@@ -348,6 +383,10 @@ class Client(object):
         #   blit fake screen onto real screen
         self.screen_commit.blit(self.screen, (self.screen_offset))
         self.screen_commit.blit(self.ui, (0, 0))
+        frame = pygame.transform.scale(self.screen_commit,
+            [ALT_WINDOW_WIDTH,
+            ALT_WINDOW_HEIGHT])
+        self.real_display.blit(frame, [0, 0])
         pygame.display.flip()
 
     def update_camera_shake(self, dt):
@@ -386,7 +425,7 @@ class Client(object):
         #   FIXME get better solution to this problem. Malfunctions need the
         #   player name so they are distinguishable from each other, but adding
         #   the name in breaks everything that relies on the original card name.
-        
+
         #   Strip out special cases where names break the thing
         if "Hull Breach" in name:
             name = "Hull Breach"
@@ -469,7 +508,6 @@ class Client(object):
             #   Determine whether object should be destroyed or not on
             #   being received
 
-          # TODO destroy cards going to facedown piles
 
             self.log_print("Moving %s from %s to %s." % (card, origin, destination))
             self.move_card(origin_obj, dest_obj, name=card)
@@ -599,6 +637,12 @@ class Client(object):
             self.log_print("Choose between the following: %s." % option_string)
             self.prompt_options = options
 
+        elif split[1] == "turn":
+
+            player = split[2]
+            self.log_print("%s has started their turn." % player.capitalize())
+            #   TODO Add visual indicator for active player
+
 
     def log_print(self, msg):
         """ Print the update to the log. """
@@ -620,7 +664,7 @@ class Client(object):
             self.fps = int(0.2*1/dt + 0.8*self.fps)
             self.last_fps_blit = time.time()
         color = (255, 255, 255)
-        font = pygame.font.SysFont(PLAYERFONT, 25)
+        font = pygame.font.Font(PLAYERFONT, 25)
         string = font.render("FPS: %s" % self.fps, 1, color)
         self.ui.blit(string, (20, 20))
 

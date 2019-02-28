@@ -25,7 +25,7 @@ class CardRender(object):
         self.alpha = 255
         self.target_alpha = 255
         self.fade_rate = 155
-        self.smoothing = 150    #   255 is crisp and sharp, 0 is disgustingly smooth
+        self.smoothing = 255    #   255 is crisp and sharp, 0 is disgustingly smooth
 
         #   There may be some case where these are separate
         self.target_pos = pos
@@ -33,10 +33,13 @@ class CardRender(object):
         self.destroy_on_destination = False
         self.pile = False
         self.display_type = "full"
+        self.target_scale = 1.0
+        self.cur_scale = 1.0
+        self.is_hovered = False
 
         #   Movement parameters
-        self.max_speed = 1200    #   Pixels (?) per second
-        self.prop_accel = 3   #   Proportion of distance to target per second
+        self.max_speed = 1000    #   Pixels (?) per second
+        self.prop_accel = 5   #   Proportion of distance to target per second
         self.threshold = 1  #   Pixels away for "close enough"
 
         #   Generate image/surface
@@ -146,7 +149,7 @@ class CardRender(object):
         if lock is true, only size min_size will be tested."""
 
         size = min_size
-        self.card_font = pygame.font.SysFont(font, size)
+        self.card_font = pygame.font.Font(font, size)
         string = self.card_font.render(text, 1, color)
 
         if lock:
@@ -159,12 +162,12 @@ class CardRender(object):
             string.get_height() < max_height:
 
             #   Generate a new surface and increase the size
-            self.card_font = pygame.font.SysFont(font, size)
+            self.card_font = pygame.font.Font(font, size)
             string = self.card_font.render(text, 1, color)
             size += 1
 
         #   Make it slightly smaller than it was
-        self.card_font = pygame.font.SysFont(font, size-2)
+        self.card_font = pygame.font.Font(font, size-2)
         string = self.card_font.render(text, 1, color)
 
         return string
@@ -191,10 +194,20 @@ class CardRender(object):
     def update_movement(self, dt):
         """ Moves the card closer to its target position """
 
+
         #   Find difference in render and target positions
         dx = self.target_pos[0] - self.render_pos[0]
         dy = self.target_pos[1] - self.render_pos[1]
         dist = self.to_go()
+
+        #   Update current scale
+        if self.is_hovered:
+            self.target_scale = 1.15
+        else:
+            self.target_scale = 1.0
+        ds = self.target_scale - self.cur_scale
+        if dist < 10:
+            self.cur_scale += ds*dt*7.0
 
         #   Only move if the card is farther than the acceptable amount away.
         if dist > self.threshold:
@@ -240,7 +253,6 @@ class CardRender(object):
         if self.since_flash < self.flash_period:
             self.lighten_amt = min(self.since_flash,
                 self.flash_period - self.since_flash) * self.flash_intensity
-            print(self.since_flash, self.flash_period, self.lighten_amt)
 
     def draw(self):
         """ Draws the card on the screen based on its render position. """
@@ -253,15 +265,26 @@ class CardRender(object):
         self.draw_flash()
 
         #   Camera smoothing
-        self.screen.set_alpha(self.smoothing)
+        if self.smoothing < 255:
+            self.screen.set_alpha(self.smoothing)
 
         #   Apply lighten effect
-        self.lighten_surface.set_alpha(self.lighten_amt)
+        self.lighten_surface.set_alpha(min(self.lighten_amt, 255))
         new_surf.blit(self.lighten_surface.convert(), (0, 0))
 
         new_surf.set_alpha(self.alpha)
 
-        self.screen.blit(new_surf, self.render_pos)
+        xoff, yoff = 0, 0
+        if abs(self.cur_scale - 1.0) > 0.01 and self.display_type == "full":
+            new_surf = pygame.transform.scale(new_surf,
+                (int(CARD_WIDTH*self.cur_scale),
+                 int(CARD_HEIGHT*self.cur_scale)))
+            xoff = int(CARD_WIDTH*(self.cur_scale - 1)/2)
+            yoff = int(CARD_HEIGHT*(self.cur_scale - 1)/2)
+    
+        self.screen.blit(new_surf,
+            (self.render_pos[0] - xoff,
+            self.render_pos[1] - yoff))
 
     def destroy_me(self):
         """ Determines whether this card wants to be destroyed. """

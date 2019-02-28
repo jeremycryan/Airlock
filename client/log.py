@@ -19,8 +19,8 @@ class Log(object):
 
         #   Font
         self.font = LOGFONT
-        self.font_size = 20
-        self.font_obj = pygame.font.SysFont(self.font, self.font_size)
+        self.font_size = 15
+        self.font_obj = pygame.font.Font(self.font, self.font_size)
 
         #   Typesetting
         self.line_break = 20

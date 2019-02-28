@@ -75,20 +75,23 @@ class Impact(Card):
 
         #   Choose to damage character or oxygen supply
         self.hidden = False
+        red_on_activation = self.game.is_red_alert()
         if self.game.active_player in self.game.live_players:
             choice = self.game.active_player.prompt(['Damage self',
                 'Damage oxygen supply'],
                 prompt_string = "Choose where to apply damage. ")
         else:
             choice = 'Damage oxygen supply'
+
         #   Execute choice
         if choice == 'Damage self':
             self.game.active_player.damage()
         elif choice == 'Damage oxygen supply':
-            self.game.damage_oxygen()
+            if not self.game.oxygen_protected:
+                self.game.damage_oxygen()
 
         #    Do it again if in red alert!
-        if (not second_time) and (self.game.is_red_alert()):
+        if (not second_time) and red_on_activation:
             self.play(second_time = True)
         else:
             self.resolve()
@@ -111,10 +114,10 @@ class Aftershock(Card):
         #   Choose to damage character or oxygen supply
         if self.game.active_player in self.game.live_players:
             choice = self.game.active_player.prompt(['Damage self',
-                'Return %s to command pile' % self.name],
+                'Return to pile'],
                 prompt_string = "Choose what to do with %s. " % self.name)
         else:
-            choice = 'Return %s to command pile' % self.name
+            choice = 'Return to pile' % self.name
         #   Execute choice
         if choice == 'Damage self':
             self.game.active_player.damage()
@@ -580,11 +583,13 @@ class Execute(Card):
             prompt_string = "Choose a player to execute. ")
 
         #   Everybody cast your votes!
+        yes = "Kill %s" % nominee
+        no = "Don't kill %s" % nominee
         for player in player_list:
-            choice = player.prompt(["Yes", "No"],
+            choice = player.prompt([yes, no],
                 prompt_string = "Vote to kill %s? " % nominee)
 
-            if choice == "Yes":
+            if choice == yes:
                 print("%s has voted to kill %s." % (player, nominee))
             else:
                 print("%s has voted not to kill %s." % (player, nominee))
@@ -593,7 +598,7 @@ class Execute(Card):
             player.character.on_vote(player)
 
         #   Determine whether the nominee dies or not
-        if votes.count("Yes") > len(player_list)/2.0:
+        if votes.count(yes) > len(player_list)/2.0:
             self.game.kill(nominee)
             print("%s has been killed." % nominee)
 
