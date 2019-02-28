@@ -87,7 +87,8 @@ class Impact(Card):
         if choice == 'Damage self':
             self.game.active_player.damage()
         elif choice == 'Damage oxygen supply':
-            self.game.damage_oxygen()
+            if not self.game.oxygen_protected:
+                self.game.damage_oxygen()
 
         #    Do it again if in red alert!
         if (not second_time) and red_on_activation:
