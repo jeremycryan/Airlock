@@ -4,3 +4,9 @@ __pycache__/*
 
 # ignore graphics folder
 client/airlockgraphics/*
+client/airlockgraphics.zip
+
+# ignore outputs of pyinstaller
+client/build
+client/dist
+*.spec
