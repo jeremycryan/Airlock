@@ -32,6 +32,7 @@ class Client(object):
         self.real_display = pygame.display.set_mode([ALT_WINDOW_WIDTH,
                                                     ALT_WINDOW_HEIGHT])
         pygame.display.set_caption("Project Airlock")
+
         self.last_fps_blit = 0
         self.fps = 0
         self.zoomed_path = None
@@ -628,6 +629,8 @@ class Client(object):
 
             winners = split[2]
             self.log_print("The %s team has won!" % winners)
+            pygame.quit()
+            sys.exit()
 
         elif split[1] == "prompt":
 
