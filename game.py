@@ -13,7 +13,6 @@ import threading
 import time
 import sys
 
-TEST_MODE = False
 DECK_FILE = "expansion_cards"
 CHAOS = False
 
@@ -22,7 +21,7 @@ class Game(object):
 
     def __init__(self):
         self.players = []
-        self.TEST_MODE = TEST_MODE
+        self.TEST_MODE = False
 
     def main(self):
         """ Plays the game """
@@ -346,6 +345,12 @@ class Game(object):
         print(player.name + " is dead!")
         self.publish(self.players, "kill", player, player.mission)
         player.mission.on_death()
+        crew = 0
+        for p in self.live_players:
+            if not p.mission.is_red:
+                crew += 1
+        if not crew:
+            self.end_game(False)
 
     def find_permanent_card(self, name, excluded_player = None):
         """ Determines if a permanent card is in play """
@@ -443,7 +448,7 @@ class Game(object):
         message = "%d:%s:%s;" % (self.msg_index, event_type, arglist)
 
         self.msg_index += 1
-        if TEST_MODE:
+        if self.TEST_MODE:
             print(players,message)
         else:
             for player in players:
@@ -570,11 +575,17 @@ class Game(object):
 
 if __name__ == '__main__':
     game = Game()
-    if TEST_MODE:
-        game.add_player("Jarm")
-        game.add_player("Dan")
-        game.add_player("Ppab")
-        game.add_player("Ness")
+    if len(sys.argv) >= 2 and sys.argv[1].lower() == "test":
+        game.TEST_MODE = True
+        n = 4
+        if len(sys.argv) == 3 and sys.argv[2].isdigit():
+            n = int(sys.argv[2])
+        if n < 2 or n > 6:
+            print("Invalid number of players")
+            n = 4
+        names = ["Jarm","Paul","Dan","Nate","Nick","Diego"]
+        for i in range(n):
+            game.add_player(names[i])
     else:
         game.wait_for_players()
         time.sleep(1)

@@ -19,8 +19,6 @@ class Player(object):
         self.permanents = Deck(game, "%s Permanents" % name)
         self.next_ally = None
         self.skipped = False
-        self.mission = "Crew"
-        self.color = "blue"
 
     def __repr__(self):
         return self.name
