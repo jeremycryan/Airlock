@@ -3,10 +3,15 @@
 ################## WINDOW AND RESOLUTION SETTINGS #####################
 
 #   Size of the window, in pixels
+<<<<<<< Updated upstream
 WINDOW_WIDTH = 1600
 WINDOW_HEIGHT = 900
 ALT_WINDOW_WIDTH = 1600
 ALT_WINDOW_HEIGHT = 900
+=======
+WINDOW_WIDTH = 1600*2//3
+WINDOW_HEIGHT = 900*2//3
+>>>>>>> Stashed changes
 MID_X = int(WINDOW_WIDTH/2)
 MID_Y = int(WINDOW_HEIGHT/2)
 

@@ -90,7 +90,7 @@ class Researcher(Character):
         Character.__init__(self, game, "Researcher")
         self.abilities["Examine"] = 1
 
-    def investigate(self):
+    def examine(self):
         player = self.game.get_player(self)
         target = player.prompt(self.game.live_players[:],
                                prompt_string = "Who do you choose to investigate? ")
