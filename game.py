@@ -13,6 +13,7 @@ import threading
 import time
 import sys
 
+TEST_MODE = False
 DECK_FILE = "expansion_cards"
 CHAOS = False
 
@@ -21,6 +22,7 @@ class Game(object):
 
     def __init__(self):
         self.players = []
+        self.TEST_MODE = TEST_MODE
 
     def main(self):
         """ Plays the game """
@@ -440,19 +442,20 @@ class Game(object):
 
         message = "%d:%s:%s;" % (self.msg_index, event_type, arglist)
 
-        #print(players,message) # TODO: send message
         self.msg_index += 1
+        if TEST_MODE:
+            print(players,message)
+        else:
+            for player in players:
+                print(player, message)
+                num = self.player_to_number(player)
+                sock = self.player_sockets[num]
 
-        for player in players:
-            print(player, message)
-            num = self.player_to_number(player)
-            sock = self.player_sockets[num]
-
-            #   Try to send via socket
-            try:
-                sock.send(message.encode())
-            except BrokenPipeError:
-                print("Could not contact %s." % player)
+                #   Try to send via socket
+                try:
+                    sock.send(message.encode())
+                except BrokenPipeError:
+                    print("Could not contact %s." % player)
 
 ######################### SERVER AND CONNECTION BELOW ##########################
 
@@ -567,7 +570,13 @@ class Game(object):
 
 if __name__ == '__main__':
     game = Game()
-    game.wait_for_players()
-    time.sleep(1)
+    if TEST_MODE:
+        game.add_player("Jarm")
+        game.add_player("Dan")
+        game.add_player("Ppab")
+        game.add_player("Ness")
+    else:
+        game.wait_for_players()
+        time.sleep(1)
     while 1:
         game.main()
