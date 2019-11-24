@@ -21,7 +21,6 @@ After cloning this repository, you can start a server instance by calling `pytho
 
 ### Next steps
 - Make server-client interaction more robust and account for loss of connection condition
-- Configure socket such that you can access the server if it is on a different network
 - Improve usability by adding more gamestate updates for changes in player turn, ally selection, shuffling, and game win
 - Add resetting functionality to client
 - Overall improvements to GUI, including to graphics and animation
