@@ -654,5 +654,6 @@ class Nullify(Card):
             player = self.game.active_player
             target = player.prompt(cards,
                                    prompt_string = "Choose a card to nullify. ")
+            target.hidden = False
             self.game.move_card(target, self.game.stage, self.game.to_discard)
         self.resolve()

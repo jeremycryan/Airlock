@@ -90,7 +90,7 @@ class Researcher(Character):
         Character.__init__(self, game, "Researcher")
         self.abilities["Examine"] = 1
 
-    def investigate(self):
+    def examine(self):
         player = self.game.get_player(self)
         target = player.prompt(self.game.live_players[:],
                                prompt_string = "Who do you choose to investigate? ")
@@ -122,22 +122,20 @@ class Quartermaster(Character):
 class Autopilot(Character):
     def __init__(self, game):
         Character.__init__(self, game, "Autopilot")
-        self.abilities["Hack"] = 1 # TODO: forgot the name of this ability
+        self.abilities["Hijack"] = 1
 
-    def hack(self):
+    def hijack(self):
         player = self.game.get_player(self)
         options = ["Red Alert", "Blue Alert"]
         alert = player.prompt(options,
                              prompt_string = "Choose alert status for next turn. ")
-        self.game.publish(self.game.players, "ability", "Hack", self.game.active_player.name, alert)
+        self.game.publish(self.game.players, "ability", "Hijack", self.game.active_player.name, alert)
         self.game.force_red = 1 if alert == options[0] else -1
 
 class Stowaway(Character):
     def __init__(self, game):
         Character.__init__(self, game, "Stowaway")
-        self.abilities["Infiltrate"] = 0
-        #   FIXME Make this ability cost 2 energy, and only be usable if the
-        #   player has two energy.
+        self.abilities["Infiltrate"] = 2
 
     def infiltrate(self):
         player = self.game.get_player(self)

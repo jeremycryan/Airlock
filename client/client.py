@@ -56,6 +56,8 @@ class Client(object):
 
         self.msg_queue = []
         self.prompt_options = None
+        pygame.display.toggle_fullscreen ()
+
 
     def generate_oxygen(self, oxygen_profile, screen):
         """ Generates an oxygen cell object. """
