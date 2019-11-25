@@ -174,6 +174,10 @@ class Client(object):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.real_display = pygame.display.set_mode([ALT_WINDOW_WIDTH,
+                                                                ALT_WINDOW_HEIGHT])
 
     def assemble_players(self, player_list):
         """ Assumes the last item in player_list is the active player. Generates
@@ -359,7 +363,7 @@ class Client(object):
             if card:
                 if self.zoomed_path != card.path:
                     self.zoomed = pygame.image.load(source_path(card.path))
-                    self.zoomed = pygame.transform.scale(self.zoomed,
+                    self.zoomed = pygame.transform.smoothscale(self.zoomed,
                         (int(LOG_WIDTH), int(7*LOG_WIDTH/5)))
                     self.zoomed_path = card.path
                 self.ui.blit(self.zoomed, (LOG_XPOS, PREVIEW_MARGIN))
@@ -384,7 +388,7 @@ class Client(object):
         #   blit fake screen onto real screen
         self.screen_commit.blit(self.screen, (self.screen_offset))
         self.screen_commit.blit(self.ui, (0, 0))
-        frame = pygame.transform.scale(self.screen_commit,
+        frame = pygame.transform.smoothscale(self.screen_commit,
             [ALT_WINDOW_WIDTH,
             ALT_WINDOW_HEIGHT])
         self.real_display.blit(frame, [0, 0])

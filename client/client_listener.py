@@ -49,10 +49,14 @@ class Listener(object):
         self.client.server_socket = self.server
         listen_thread = threading.Thread(target = self.listen_for_messages)
         listen_thread.start()
+        self.main(self.run_game)
+
+    def run_game(self):
         self.client.demo_card(self.players, self.name)
 
-    def main(self):
-        pass
+    def main(self, start_func):
+        while True:
+            start_func = start_func()
 
     def listen_for_messages(self):
         """ Listens for incoming messages and sends them to the clients. """
