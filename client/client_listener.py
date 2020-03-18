@@ -20,11 +20,16 @@ class Listener(object):
         while not connected:
             try:
                 self.server_ip = input("Input server IP address: ")
+                split = self.server_ip.split(":")
+                if len(split) > 1 and is_integer(split[-1]):
+                    self.server_ip = "".join(split[:-1])
+                    Port = int(split[-1])
+                else:
+                    Port = 52801
                 self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                Port = 52801
                 self.server.connect((self.server_ip,Port))
                 connected = True
-            except socket.gaierror:
+            except socket.gaierror as s:
                 print("Something went wrong. Try another IP.")
 
         #   Keep listening until you get a response
@@ -66,6 +71,16 @@ class Listener(object):
             if msg:
                 print("%s received the following message: %s" % (self.name, msg.decode()))
                 self.client.read_msg(msg.decode())
+
+
+def is_integer(string):
+    """ Returns true if the string is composed only of digits 0-9."""
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
+
 
 if __name__ == '__main__':
     a = Listener()

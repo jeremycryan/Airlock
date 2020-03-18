@@ -1,7 +1,6 @@
 Oxygen: Red, Red, Blue, Blue, Blue, Blue
 Missions: Saboteur, Crew, Crew, Crew, Chancellor, Accomplice
 Characters: Autopilot, Stowaway, Quartermaster
-Characters: AI, Stowaway, Quartermaster
 Energy: 13
 Impact: 7
 Rupture: 5
