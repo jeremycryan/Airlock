@@ -38,8 +38,8 @@ class CardRender(object):
         self.is_hovered = False
 
         #   Movement parameters
-        self.max_speed = 1000    #   Pixels (?) per second
-        self.prop_accel = 5   #   Proportion of distance to target per second
+        self.max_speed = 2000    #   Pixels (?) per second
+        self.prop_accel = 10   #   Proportion of distance to target per second
         self.threshold = 1  #   Pixels away for "close enough"
 
         #   Generate image/surface
@@ -62,8 +62,8 @@ class CardRender(object):
 
         self.last_flash = 0
         self.since_flash = 999
-        self.flash_period = 0.7
-        self.flash_intensity = 600
+        self.flash_period = 0.4
+        self.flash_intensity = 700
 
     def generate_icon_surface(self):
         """ Generates a surface smaller than the original for use as an icon """

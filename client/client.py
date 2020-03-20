@@ -177,6 +177,9 @@ class Client(object):
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_f:
+                    print("AErgoierng")
+                    self.real_display = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
                 if event.key == pygame.K_ESCAPE:
                     self.real_display = pygame.display.set_mode([ALT_WINDOW_WIDTH,
                                                                 ALT_WINDOW_HEIGHT])
@@ -248,6 +251,7 @@ class Client(object):
             self.update_pygame_events()
             nup = time.time()
             dt = nup - up
+            dt = min(0.05, dt)
             up = nup
             since_last += dt
 
@@ -267,20 +271,17 @@ class Client(object):
                 for i, item in enumerate(self.msg_queue):
                     if (":deck:" in item) or (":character:" in item) or (":reveal:" in item):
                         self.interpret_msg(item)
-                        since_last = 0
+                        since_last = ACTION_LENGTH
                     if (":prompt:" in item):
                         self.interpret_msg(item)
-                        since_last = 0
+                        since_last = ACTION_LENGTH
                                         
                 #if ":prompt:" in self.msg_queue[0]:
                 #    self.interpret_msg(self.msg_queue[0])
 
             #   Have a small delay between animating items.
-            if since_last > ACTION_LENGTH:
-                since_last -= ACTION_LENGTH
-
-                if since_last > ACTION_LENGTH:
-                    since_last = 0
+            if since_last >= ACTION_LENGTH:
+                since_last = 0
 
                 #   If there is a message in the queue, execute it
                 if len(self.msg_queue):
@@ -353,8 +354,8 @@ class Client(object):
         screen scaling. """
 
         mp = pygame.mouse.get_pos()
-        yscale = WINDOW_HEIGHT/ALT_WINDOW_HEIGHT
-        xscale = WINDOW_WIDTH/ALT_WINDOW_WIDTH
+        yscale = self.screen.get_height()/self.real_display.get_height()
+        xscale = self.screen.get_width()/self.real_display.get_width()
         mouse_pos = (int(mp[0]*xscale), int(mp[1]*yscale))
 
         return mouse_pos
@@ -391,8 +392,8 @@ class Client(object):
         self.screen_commit.blit(self.screen, (self.screen_offset))
         self.screen_commit.blit(self.ui, (0, 0))
         frame = pygame.transform.smoothscale(self.screen_commit,
-            [ALT_WINDOW_WIDTH,
-            ALT_WINDOW_HEIGHT])
+            [self.real_display.get_width(),
+            self.real_display.get_height()])
         self.real_display.blit(frame, [0, 0])
         pygame.display.flip()
 

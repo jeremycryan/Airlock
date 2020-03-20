@@ -34,6 +34,7 @@ class Listener(object):
 
         #   Keep listening until you get a response
         self.id = None
+        print()
         while not self.id:
             message = self.server.recv(1024)
             if message:

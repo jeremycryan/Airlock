@@ -472,7 +472,7 @@ class Game(object):
         IP_address = ip
         PORT = 52801
 
-        server.bind((IP_address,PORT))
+        server.bind(("localhost",PORT))
         server.listen(500)
 
         return server
